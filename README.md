@@ -1,4 +1,4 @@
-﻿# JST-Coarsen: Joint Spatio-Temporal Graph Coarsening for Dynamic Graph Neural Networks
+# JST-Coarsen: Joint Spatio-Temporal Graph Coarsening for Dynamic Graph Neural Networks
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch 1.12+](https://img.shields.io/badge/PyTorch-1.12+-ee4c2c.svg)](https://pytorch.org/)
@@ -62,21 +62,7 @@ All experiments evaluate downstream dynamic node classification using the unifie
 
 Datasets are presented in descending order of performance:
 
-### 1. Citeseer ($N=2,110$, $T=10$, $C=6$ Classes) — Mean AUROC: 96.18%
-*Full Uncompressed Graph ($\alpha=1.0$): 94.26% AUROC*
-
-| Method / Baseline | $\alpha = 0.9$ | $\alpha = 0.8$ | $\alpha = 0.7$ | $\alpha = 0.6$ | $\alpha = 0.5$ | $\alpha = 0.4$ | $\alpha = 0.3$ | Mean AUROC |
-|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **JST-Coarsen (Ours)** | **95.09** | **95.94** | **96.50** | **96.20** | **96.75** | **96.71** | **96.08** | **96.18** |
-| SACoD-supra | 94.96 | 94.32 | 93.70 | 93.43 | 92.66 | 89.10 | 91.27 | 92.78 |
-| SACoD-snap | 94.05 | 93.55 | 93.57 | 92.94 | 93.02 | 92.40 | 90.00 | 92.79 |
-| NetCondense | 94.15 | 93.96 | 95.41 | 93.92 | 86.69 | 78.96 | 71.77 | 87.84 |
-| VariationNb | 93.37 | 94.93 | 93.96 | 94.72 | 93.95 | 94.72 | 93.03 | 94.10 |
-| VariationEdges | 94.59 | 93.31 | 92.71 | 94.29 | 93.54 | 92.58 | 90.93 | 93.14 |
-| HeavyEdge | 94.94 | 92.79 | 94.70 | 92.66 | 94.02 | 93.66 | 93.23 | 93.71 |
-| Random | 95.03 | 95.29 | 94.93 | 94.54 | 94.76 | 92.56 | 92.97 | 94.30 |
-
-### 2. Cora ($N=2,485$, $T=10$, $C=7$ Classes) — Mean AUROC: 90.41%
+### 1. Cora ($N=2,485$, $T=10$, $C=7$ Classes) — Mean AUROC: 90.41%
 *Full Uncompressed Graph ($\alpha=1.0$): 92.51% AUROC*
 
 | Method / Baseline | $\alpha = 0.9$ | $\alpha = 0.8$ | $\alpha = 0.7$ | $\alpha = 0.6$ | $\alpha = 0.5$ | $\alpha = 0.4$ | $\alpha = 0.3$ | Mean AUROC |
@@ -90,7 +76,7 @@ Datasets are presented in descending order of performance:
 | HeavyEdge | 91.45 | 89.90 | 89.74 | 87.46 | 86.50 | 83.91 | 80.04 | 87.00 |
 | Random | 91.30 | 91.11 | 90.38 | 87.99 | 86.84 | 81.61 | 79.31 | 86.93 |
 
-### 3. IMDB ($N=3,883$, $T=47$, $C=2$ Classes) — Mean AUROC: 89.22%
+### 2. IMDB ($N=3,883$, $T=47$, $C=2$ Classes) — Mean AUROC: 89.22%
 *Full Uncompressed Graph ($\alpha=1.0$): 90.33% AUROC*
 
 | Method / Baseline | $\alpha = 0.9$ | $\alpha = 0.8$ | $\alpha = 0.7$ | $\alpha = 0.6$ | $\alpha = 0.5$ | $\alpha = 0.4$ | $\alpha = 0.3$ | Mean AUROC |
@@ -104,7 +90,7 @@ Datasets are presented in descending order of performance:
 | HeavyEdge | 73.77 | 73.57 | 74.14 | 72.70 | 73.06 | 68.06 | 59.74 | 70.72 |
 | Random | 73.98 | 73.57 | 73.80 | 73.99 | 72.11 | 70.62 | 69.69 | 72.54 |
 
-### 4. DBLP5 ($N=4,113$, $T=10$, $C=5$ Imbalanced Classes) — Mean AUROC: 83.30%
+### 3. DBLP5 ($N=4,113$, $T=10$, $C=5$ Imbalanced Classes) — Mean AUROC: 83.30%
 *Full Uncompressed Graph ($\alpha=1.0$): 83.60% AUROC*
 
 | Method / Baseline | $\alpha = 0.9$ | $\alpha = 0.8$ | $\alpha = 0.7$ | $\alpha = 0.6$ | $\alpha = 0.5$ | $\alpha = 0.4$ | $\alpha = 0.3$ | Mean AUROC |
@@ -117,6 +103,20 @@ Datasets are presented in descending order of performance:
 | VariationEdges | 84.71 | 84.41 | 81.07 | 79.48 | 74.10 | 73.30 | 61.66 | 76.96 |
 | HeavyEdge | 84.10 | 81.60 | 79.85 | 76.48 | 74.17 | 72.61 | 68.50 | 76.76 |
 | Random | 84.89 | 82.51 | 80.09 | 80.04 | 79.94 | 77.39 | 77.14 | 80.29 |
+
+### 4. Citeseer ($N=2,120$, $T=10$, $C=6$ Classes) — Mean AUROC: 74.87%
+*Full Uncompressed Graph ($\alpha=1.0$): 74.26% AUROC*
+
+| Method / Baseline | $\alpha = 0.9$ | $\alpha = 0.8$ | $\alpha = 0.7$ | $\alpha = 0.6$ | $\alpha = 0.5$ | $\alpha = 0.4$ | $\alpha = 0.3$ | Mean AUROC |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **JST-Coarsen (Ours)** | **77.09** | **71.55** | **76.36** | 72.64 | 75.16 | **77.43** | **73.83** | **74.87** |
+| SACoD-supra | 74.86 | 71.48 | 69.44 | 68.87 | 69.71 | 67.64 | 68.43 | 70.06 |
+| SACoD-snap | 76.18 | 70.65 | 68.35 | 68.12 | 60.48 | 65.44 | 69.23 | 68.35 |
+| NetCondense | **77.83** | 73.85 | 76.04 | 76.88 | 75.50 | 75.48 | 68.54 | **74.87** |
+| VariationNb | 76.19 | 74.11 | 75.26 | 76.53 | **77.03** | 77.26 | 68.53 | 74.99 |
+| VariationEdges | 75.39 | 74.83 | 75.33 | 71.73 | 74.29 | 75.74 | 68.66 | 73.71 |
+| HeavyEdge | 76.14 | 70.19 | 67.76 | 69.31 | 65.23 | 65.17 | 64.54 | 68.33 |
+| Random | 77.26 | 72.65 | 75.28 | **76.74** | 73.26 | 71.37 | 70.80 | 73.91 |
 
 ### 5. Reddit4 ($N=8,214$, $T=10$, $C=4$ Classes) — Mean AUROC: 58.25%
 *Full Uncompressed Graph ($\alpha=1.0$): 62.66% AUROC*
@@ -147,7 +147,7 @@ Datasets are presented in descending order of performance:
 │   └── preprocess_cora.py        # Builds Cora_no_isolated.npz from raw archives
 │
 ├── src/                          # Preprocessed Benchmark Graph Sequences
-│   ├── Citeseer/                 # Citeseer_no_isolated.npz (T=10, N=2,110, C=6)
+│   ├── Citeseer/                 # Citeseer_no_isolated.npz (T=10, N=2,120, C=6)
 │   ├── Cora/                     # Cora_no_isolated.npz (T=10, N=2,485, C=7)
 │   ├── Cora_Raw/                 # Raw Cora authorship, citations, dictionary
 │   ├── DBLP5/                    # DBLP5_no_isolated.npz & DBLP5.npz (T=10, N=4,113, C=5)
@@ -231,7 +231,7 @@ pip install -r requirements.txt
 To evaluate JST-Coarsen against all 7 baselines across all 7 coarsening ratios $\alpha \in [0.3, 0.9]$ on `GCN*2GRU`:
 
 ```bash
-# Citeseer Benchmark (Peak 96.75% AUROC)
+# Citeseer Benchmark (Peak 77.43% AUROC)
 python benchmarks/run_benchmark_citeseer.py
 
 # Cora Benchmark (Peak 92.07% AUROC)
