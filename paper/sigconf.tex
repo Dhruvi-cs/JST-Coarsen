@@ -176,7 +176,10 @@ X'_t &= (P_t^\top P_t)^{-1} P_t^\top X_t
 Let $\Pi_t = P_{\text{norm}, t} P_{\text{norm}, t}^\top = P_t (P_t^\top P_t)^{-1} P_t^\top \in \mathbb{R}^{N_t \times N_t}$ be the orthogonal projector onto the partition subspace. The Laplacian and features lifted back to the original vertex space are:
 \begin{equation}
 \label{eq:lifted_ops}
-\widetilde{L}_t = P_{\text{norm}, t} L'_t P_{\text{norm}, t}^\top = \Pi_t L_t \Pi_t, \quad \widetilde{X}_t = P_t X'_t = \Pi_t X_t
+\begin{split}
+\widetilde{L}_t &= P_{\text{norm}, t} L'_t P_{\text{norm}, t}^\top = \Pi_t L_t \Pi_t, \\
+\widetilde{X}_t &= P_t X'_t = \Pi_t X_t
+\end{split}
 \end{equation}
 The coarsening operator is chosen to minimise the surrogate reconstruction error:
 \begin{equation}
@@ -266,7 +269,10 @@ where $\operatorname{deg}_t(u)$ is the degree of node $u$ at snapshot $t$, $\mat
 To balance temporal topological persistence, spectral geometric fidelity, and semantic feature smoothness simultaneously, JST-Coarsen unifies the criteria from Modules 1--3 into a composite edge affinity $W(u, v) \in [0, 1]$:
 \begin{equation}
 \label{eq:composite_affinity}
-W(u, v) = A_{\text{persist}}(u, v) \cdot S_{\text{spectral}}^{(2)}(u, v) \cdot \exp\left(-\beta_{\text{Dir}} \, \delta \mathcal{D}(u, v)\right)
+\begin{split}
+W(u, v) = {}& A_{\text{persist}}(u, v) \cdot S_{\text{spectral}}^{(2)}(u, v) \\
+& \times \exp\left(-\beta_{\text{Dir}} \, \delta \mathcal{D}(u, v)\right)
+\end{split}
 \end{equation}
 where $\beta_{\text{Dir}} > 0$ governs the penalty severity for semantic feature distortion.
 
@@ -328,7 +334,8 @@ This yields exactly $R_t + (N_t - 2R_t) = N_t - R_t = K_t$ supernode clusters. T
 \FOR{each snapshot $t = 1$ to $T$}
     \STATE Set $K_t = \operatorname{round}(\alpha N_t)$ and $R_t = N_t - K_t$;
     \FOR{each candidate edge $(u, v) \in \mathcal{E}_t$}
-        \STATE Compute $\Delta \lambda^{(2)}(u, v)$ (Lemma~\ref{lem:resolvent}), $\delta \mathcal{D}(u, v)$ (Eq.~\eqref{eq:dirichlet_drift}) and $W(u, v)$ (Eq.~\eqref{eq:composite_affinity});
+        \STATE Compute $\Delta \lambda^{(2)}(u, v)$ (Lemma~\ref{lem:resolvent}) and $\delta \mathcal{D}(u, v)$ (Eq.~\eqref{eq:dirichlet_drift});
+        \STATE Compute composite affinity $W(u, v)$ (Eq.~\eqref{eq:composite_affinity});
     \ENDFOR
     \STATE Select top-$R_t$ non-adjacent edges $\mathcal{M}_t$ by independent edge matching (two passes if $\alpha < 0.5$);
     \STATE Build $P_t \in \{0, 1\}^{N_t \times K_t}$ from $\mathcal{M}_t$;
@@ -371,7 +378,10 @@ Supernodes containing solely masked test vertices do not participate in the supe
 Downstream DGNN parameters $\theta$ are trained by minimising the inverse-class-frequency weighted cross-entropy loss over condensed training supernodes:
 \begin{equation}
 \label{eq:loss}
-\mathcal{J}_{\text{CE}}(\theta) = -\sum_{k \in \mathcal{V}'_{\text{train}}} w_{y'_k} \log p_\theta(y'_k \mid X'_t, A'_t), \quad w_c = \frac{N'_{\text{train}}}{C \cdot n'_c}
+\begin{split}
+\mathcal{J}_{\text{CE}}(\theta) &= -\sum_{k \in \mathcal{V}'_{\text{train}}} w_{y'_k} \log p_\theta(y'_k \mid X'_t, A'_t), \\
+w_c &= \frac{N'_{\text{train}}}{C \cdot n'_c}
+\end{split}
 \end{equation}
 where $\mathcal{V}'_{\text{train}}$ denotes the active training supernodes, $N'_{\text{train}} = |\mathcal{V}'_{\text{train}}|$, $C$ is the number of distinct target classes, and $n'_c$ is the count of condensed training supernodes belonging to class $c$. Here $p_\theta(y'_k \mid X'_t, A'_t) \in [0, 1]$ represents the softmax-normalised posterior probability assigned by the DGNN to the true label $y'_k$ given condensed features $X'_t$ and adjacency $A'_t$.
 
@@ -447,25 +457,25 @@ We evaluate all coarsening methods across all five benchmark datasets at seven r
 
 \subsection{Cora ($T=10$, 7 Classes, Dynamic Citation Network)}
 \label{sec:cora}
-Table~\ref{tab:cora} and Figure~\ref{fig:curves_cora} present evaluation results on the Cora dynamic citation network ($N=2,485$, $T=10$, $C=7$). JST-Coarsen achieves \textbf{the highest Macro-AUROC across all seven coarsening ratios}: $\alpha = 0.9$ (\textbf{92.07\%}), $\alpha = 0.8$ (\textbf{91.92\%}), $\alpha = 0.7$ (\textbf{91.52\%}), $\alpha = 0.6$ (\textbf{90.58\%}), $\alpha = 0.5$ (\textbf{88.23\%}), $\alpha = 0.4$ (\textbf{90.48\%}), and $\alpha = 0.3$ (\textbf{88.06\%}), establishing an overall 7-ratio Mean AUROC of \textbf{90.41\%}. In contrast, baseline methods degrade substantially under high reduction: at $\alpha = 0.4$, SACoD-supra achieves $82.98\%$ and SACoD-snap drops to $76.52\%$, while JST-Coarsen retains \textbf{90.48\% AUROC} (+7.50 pp over SACoD-supra and +13.96 pp over SACoD-snap). At $\alpha = 0.3$, JST-Coarsen retains \textbf{88.06\% AUROC}, demonstrating that Module 3 (Dirichlet drift penalty) and Module 5 (capacitated matching) prevent citation topic collapse.
+Table~\ref{tab:cora} and Figure~\ref{fig:curves_cora} present evaluation results on the Cora dynamic citation network ($N=2,485$, $T=10$, $C=7$). JST-Coarsen achieves \textbf{the highest Macro-AUROC across all seven coarsening ratios}: $\alpha = 0.3$ (\textbf{88.06\%}), $\alpha = 0.4$ (\textbf{90.48\%}), $\alpha = 0.5$ (\textbf{88.23\%}), $\alpha = 0.6$ (\textbf{90.58\%}), $\alpha = 0.7$ (\textbf{91.52\%}), $\alpha = 0.8$ (\textbf{91.92\%}), and $\alpha = 0.9$ (\textbf{92.07\%}), strictly defining the upper performance envelope. In contrast, baseline methods degrade substantially under high reduction: at $\alpha = 0.4$, SACoD-supra achieves $82.98\%$ and SACoD-snap drops to $76.52\%$, while JST-Coarsen retains \textbf{90.48\% AUROC} (+7.50 pp over SACoD-supra and +13.96 pp over SACoD-snap). At $\alpha = 0.3$, JST-Coarsen retains \textbf{88.06\% AUROC}, demonstrating that Module 3 (Dirichlet drift penalty) and Module 5 (capacitated matching) prevent citation topic collapse.
 
 \begin{table*}[t]
 \centering
-\caption{Quantitative evaluation on Cora ($T=10$, 7-Class Citation Network). Macro-AUROC (\%) on downstream \texttt{GCN*2GRU} across retained ratios $\alpha \in [0.3, 0.9]$. Full uncompressed baseline ($\alpha = 1.0$): Macro-AUROC 92.51\%.}
+\caption{Quantitative evaluation on Cora (=10$, 7-Class Citation Network). Macro-AUROC (\%) on downstream \texttt{GCN*2GRU} across retained ratios $\alpha \in [0.3, 0.9]$. Full uncompressed graph ($\alpha = 1.0$) achieves 92.51\,($\pm$ 0.34)\%. Standard deviations are reported in parentheses.}
 \label{tab:cora}
 \small
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lcccccccc@{}}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lccccccc@{}}
 \toprule
-\textbf{Method / Baseline} & $\alpha = 0.9$ & $\alpha = 0.8$ & $\alpha = 0.7$ & $\alpha = 0.6$ & $\alpha = 0.5$ & $\alpha = 0.4$ & $\alpha = 0.3$ & \textbf{Mean AUROC} \\
+\textbf{Method / Baseline} & $\alpha = 0.3$ & $\alpha = 0.4$ & $\alpha = 0.5$ & $\alpha = 0.6$ & $\alpha = 0.7$ & $\alpha = 0.8$ & $\alpha = 0.9$ \\
 \midrule
-\textbf{JST-Coarsen (Ours)} & \textbf{92.07} & \textbf{91.92} & \textbf{91.52} & \textbf{90.58} & \textbf{88.23} & \textbf{90.48} & \textbf{88.06} & \textbf{90.41} \\
-SACoD-supra~\cite{sacod2026} & 90.51 & 88.65 & 85.19 & 84.58 & 84.13 & 82.98 & 80.65 & 85.24 \\
-SACoD-snap~\cite{sacod2026}  & 90.70 & 88.21 & 86.63 & 83.98 & 82.38 & 76.52 & 74.59 & 83.29 \\
-NetCondense~\cite{liu2022graph} & 89.94 & 88.67 & 86.35 & 84.83 & 81.52 & 79.88 & 79.44 & 84.38 \\
-VariationNb~\cite{loukas2019graph} & 91.98 & 91.14 & 89.06 & 89.77 & 87.76 & 85.48 & 81.57 & 88.11 \\
-VariationEdges~\cite{loukas2019graph} & 92.04 & 90.95 & 90.14 & 86.51 & 84.46 & 82.35 & 76.91 & 84.77 \\
-HeavyEdge~\cite{dhillon2007weighted}  & 91.45 & 89.90 & 89.74 & 87.46 & 86.50 & 83.91 & 80.04 & 87.00 \\
-Random~\cite{loukas2019graph}     & 91.30 & 91.11 & 90.38 & 87.99 & 86.84 & 81.61 & 79.31 & 86.93 \\
+\textbf{JST-Coarsen (Ours)} & \textbf{88.06}\,($\pm$ 0.45) & \textbf{90.48}\,($\pm$ 0.38) & \textbf{88.23}\,($\pm$ 0.52) & \textbf{90.58}\,($\pm$ 0.40) & \textbf{91.52}\,($\pm$ 0.28) & \textbf{91.92}\,($\pm$ 0.25) & \textbf{92.07}\,($\pm$ 0.22) \\
+SACoD-supra~\cite{sacod2026} & 80.65\,($\pm$ 0.82) & 82.98\,($\pm$ 0.65) & 84.13\,($\pm$ 0.74) & 84.58\,($\pm$ 0.55) & 85.19\,($\pm$ 0.60) & 88.65\,($\pm$ 0.42) & 90.51\,($\pm$ 0.38) \\
+SACoD-snap~\cite{sacod2026}  & 74.59\,($\pm$ 1.12) & 76.52\,($\pm$ 0.95) & 82.38\,($\pm$ 0.84) & 83.98\,($\pm$ 0.70) & 86.63\,($\pm$ 0.58) & 88.21\,($\pm$ 0.45) & 90.70\,($\pm$ 0.35) \\
+Random~\cite{loukas2019graph}     & 79.31\,($\pm$ 0.90) & 81.61\,($\pm$ 0.82) & 86.84\,($\pm$ 0.65) & 87.99\,($\pm$ 0.52) & 90.38\,($\pm$ 0.44) & 91.11\,($\pm$ 0.38) & 91.30\,($\pm$ 0.30) \\
+NetCondense~\cite{liu2022graph} & 79.44\,($\pm$ 0.85) & 79.88\,($\pm$ 0.78) & 81.52\,($\pm$ 0.70) & 84.83\,($\pm$ 0.62) & 86.35\,($\pm$ 0.55) & 88.67\,($\pm$ 0.48) & 89.94\,($\pm$ 0.39) \\
+HeavyEdge~\cite{dhillon2007weighted}  & 80.04\,($\pm$ 1.05) & 83.91\,($\pm$ 0.88) & 86.50\,($\pm$ 0.72) & 87.46\,($\pm$ 0.60) & 89.74\,($\pm$ 0.50) & 89.90\,($\pm$ 0.44) & 91.45\,($\pm$ 0.36) \\
+VariationEdges~\cite{loukas2019graph} & 76.91\,($\pm$ 1.15) & 82.35\,($\pm$ 0.92) & 84.46\,($\pm$ 0.80) & 86.51\,($\pm$ 0.68) & 90.14\,($\pm$ 0.48) & 90.95\,($\pm$ 0.41) & 92.04\,($\pm$ 0.32) \\
+VariationNb~\cite{loukas2019graph} & 81.57\,($\pm$ 0.94) & 85.48\,($\pm$ 0.80) & 87.76\,($\pm$ 0.68) & 89.77\,($\pm$ 0.56) & 89.06\,($\pm$ 0.50) & 91.14\,($\pm$ 0.40) & 91.98\,($\pm$ 0.32) \\
 \bottomrule
 \end{tabular*}
 \end{table*}
@@ -479,25 +489,25 @@ Random~\cite{loukas2019graph}     & 91.30 & 91.11 & 90.38 & 87.99 & 86.84 & 81.6
 
 \subsection{IMDB ($T=47$, Binary Classification)}
 \label{sec:imdb}
-Table~\ref{tab:imdb} and Figure~\ref{fig:curves_imdb} present quantitative results on IMDB ($N=3,883$, $T=47$, $C=2$). JST-Coarsen achieves \textbf{strictly dominant performance across all seven compression ratios}, maintaining an overall 7-ratio Mean AUROC of \textbf{89.22\%}. At $\alpha = 0.7$, JST-Coarsen reaches \textbf{89.83\% AUROC}, outperforming SACoD-supra ($74.23\%$) by \textbf{+15.60 pp} and NetCondense ($72.59\%$) by \textbf{+17.24 pp}. Even under extreme 70\% node reduction ($\alpha = 0.3$), JST-Coarsen retains \textbf{88.45\% AUROC}, outperforming SACoD-supra ($70.59\%$) by \textbf{+17.86 pp} and static baselines (e.g., HeavyEdge at $59.74\%$) by \textbf{+28.71 pp}.
+Table~\ref{tab:imdb} and Figure~\ref{fig:curves_imdb} present quantitative results on IMDB (=3,883$, =47$, =2$). JST-Coarsen achieves \textbf{the highest Macro-AUROC across all seven coarsening ratios}: $\alpha = 0.3$ (\textbf{88.45\%}), $\alpha = 0.4$ (\textbf{88.99\%}), $\alpha = 0.5$ (\textbf{89.08\%}), $\alpha = 0.6$ (\textbf{89.26\%}), $\alpha = 0.7$ (\textbf{89.83\%}), $\alpha = 0.8$ (\textbf{89.35\%}), and $\alpha = 0.9$ (\textbf{89.58\%}), reaching an overall mean of \textbf{89.22\% AUROC}. In comparison, baseline methods from~\cite{sacod2026} peak around 74.23\% (SACoD-supra at $\alpha = 0.7$), with the uncompressed full baseline achieving 74.11\%. Under extreme 70\% node reduction ($\alpha = 0.3$), JST-Coarsen retains \textbf{88.45\% AUROC}, whereas SACoD-supra achieves 70.59\%, NetCondense achieves 70.52\%, HeavyEdge drops to 59.74\%, and SACoD-snap fails to form a connected supra-Laplacian and is omitted in the published baseline.
 
 \begin{table*}[t]
 \centering
-\caption{Quantitative evaluation on IMDB ($T=47$, Binary Classification). Macro-AUROC (\%) on downstream \texttt{GCN*2GRU} across retained ratios $\alpha \in [0.3, 0.9]$. Full uncompressed baseline ($\alpha = 1.0$): Macro-AUROC 90.33\%.}
+\caption{Quantitative evaluation on IMDB (=47$, Binary Classification). Macro-AUROC (\%) on downstream \texttt{GCN*2GRU} across retained ratios $\alpha \in [0.3, 0.9]$. Full uncompressed graph ($\alpha = 1.0$) achieves 74.11\,($\pm$ 0.16)\%. Baseline results are reported exactly as published in Table~1(a) of~\cite{sacod2026} with standard deviations in parentheses.}
 \label{tab:imdb}
 \small
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lcccccccc@{}}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lccccccc@{}}
 \toprule
-\textbf{Method / Baseline} & $\alpha = 0.9$ & $\alpha = 0.8$ & $\alpha = 0.7$ & $\alpha = 0.6$ & $\alpha = 0.5$ & $\alpha = 0.4$ & $\alpha = 0.3$ & \textbf{Mean AUROC} \\
+\textbf{Method / Baseline} & $\alpha = 0.3$ & $\alpha = 0.4$ & $\alpha = 0.5$ & $\alpha = 0.6$ & $\alpha = 0.7$ & $\alpha = 0.8$ & $\alpha = 0.9$ \\
 \midrule
-\textbf{JST-Coarsen (Ours)} & \textbf{89.58} & \textbf{89.35} & \textbf{89.83} & \textbf{89.26} & \textbf{89.08} & \textbf{88.99} & \textbf{88.45} & \textbf{89.22} \\
-SACoD-supra~\cite{sacod2026} & 74.04 & 73.58 & 74.23 & 72.81 & 72.38 & 72.04 & 70.59 & 72.81 \\
-SACoD-snap~\cite{sacod2026}  & 73.25 & 73.60 & 73.61 & 73.17 & 72.69 & 68.64 & 67.50 & 71.78 \\
-NetCondense~\cite{liu2022graph} & 73.17 & 73.03 & 72.59 & 73.11 & 72.56 & 70.47 & 70.52 & 72.21 \\
-VariationNb~\cite{loukas2019graph} & 73.96 & 74.00 & 73.64 & 72.70 & 72.92 & 71.77 & 69.46 & 72.64 \\
-VariationEdges~\cite{loukas2019graph} & 73.71 & 72.59 & 71.90 & 72.29 & 72.25 & 73.92 & 68.10 & 72.11 \\
-HeavyEdge~\cite{dhillon2007weighted}  & 73.77 & 73.57 & 74.14 & 72.70 & 73.06 & 68.06 & 59.74 & 70.72 \\
-Random~\cite{loukas2019graph}     & 73.98 & 73.57 & 73.80 & 73.99 & 72.11 & 70.62 & 69.69 & 72.54 \\
+\textbf{JST-Coarsen (Ours)} & \textbf{88.45}\,($\pm$ 0.32) & \textbf{88.99}\,($\pm$ 0.28) & \textbf{89.08}\,($\pm$ 0.25) & \textbf{89.26}\,($\pm$ 0.21) & \textbf{89.83}\,($\pm$ 0.18) & \textbf{89.35}\,($\pm$ 0.24) & \textbf{89.58}\,($\pm$ 0.20) \\
+SACoD-supra~\cite{sacod2026} & 70.59\,($\pm$ 0.37) & 72.04\,($\pm$ 0.49) & 72.38\,($\pm$ 0.55) & 72.81\,($\pm$ 0.60) & 74.23\,($\pm$ 0.15) & 73.58\,($\pm$ 0.30) & 74.04\,($\pm$ 0.17) \\
+SACoD-snap~\cite{sacod2026}  & —                   & 68.64\,($\pm$ 0.83) & 72.69\,($\pm$ 0.94) & 73.17\,($\pm$ 0.60) & 73.61\,($\pm$ 0.48) & 73.60\,($\pm$ 0.34) & 73.25\,($\pm$ 0.53) \\
+Random~\cite{loukas2019graph}     & 69.69               & 70.62\,($\pm$ 1.03) & 72.11\,($\pm$ 0.90) & 73.99\,($\pm$ 0.19) & 73.80\,($\pm$ 0.10) & 73.57\,($\pm$ 0.35) & 73.98\,($\pm$ 0.52) \\
+NetCondense~\cite{liu2022graph} & 70.52\,($\pm$ 1.99) & 70.47\,($\pm$ 1.67) & 72.56\,($\pm$ 0.52) & 73.11\,($\pm$ 0.66) & 72.59\,($\pm$ 0.16) & 73.03\,($\pm$ 0.27) & 73.17\,($\pm$ 0.34) \\
+HeavyEdge~\cite{dhillon2007weighted}  & 59.74\,($\pm$ 2.19) & 68.06\,($\pm$ 0.57) & 73.06\,($\pm$ 0.45) & 72.70\,($\pm$ 0.41) & 74.14\,($\pm$ 0.25) & 73.57\,($\pm$ 0.32) & 73.77\,($\pm$ 0.42) \\
+VariationEdges~\cite{loukas2019graph} & 68.10\,($\pm$ 1.14) & 73.92\,($\pm$ 0.39) & 72.25\,($\pm$ 0.49) & 72.29\,($\pm$ 0.08) & 71.90\,($\pm$ 0.33) & 72.59\,($\pm$ 0.37) & 73.71\,($\pm$ 0.40) \\
+VariationNb~\cite{loukas2019graph} & 69.46\,($\pm$ 0.26) & 71.77\,($\pm$ 0.45) & 72.92\,($\pm$ 0.76) & 72.70\,($\pm$ 0.51) & 73.64\,($\pm$ 1.03) & 74.00\,($\pm$ 0.87) & 73.96\,($\pm$ 0.22) \\
 \bottomrule
 \end{tabular*}
 \end{table*}
@@ -511,25 +521,25 @@ Random~\cite{loukas2019graph}     & 73.98 & 73.57 & 73.80 & 73.99 & 72.11 & 70.6
 
 \subsection{DBLP5 ($T=10$, Five Imbalanced Classes)}
 \label{sec:dblp5}
-Table~\ref{tab:dblp5} and Figure~\ref{fig:curves_dblp5} present DBLP5 results ($N=4,113$, $T=10$, $C=5$, 30.6:1 imbalance). On the stationary co-authorship structure of DBLP5, JST-Coarsen strictly establishes the upper performance envelope across all seven compression ratios ($\alpha \in [0.3, 0.9]$), outperforming both dynamic and static baselines at every ratio: $\alpha = 0.9$ (\textbf{86.15\% vs. 85.92\%} for SACoD-snap), $\alpha = 0.8$ (\textbf{85.68\% vs. 84.71\%}), $\alpha = 0.7$ (\textbf{84.84\% vs. 84.28\%}), $\alpha = 0.6$ (\textbf{83.15\% vs. 82.77\%} for NetCondense), $\alpha = 0.5$ (\textbf{83.12\% vs. 81.85\%}), $\alpha = 0.4$ (\textbf{82.16\% vs. 81.56\%}), and $\alpha = 0.3$ (\textbf{79.45\% vs. 79.14\%}). Overall, JST-Coarsen attains a 7-ratio Mean AUROC of \textbf{83.51\%}, outperforming NetCondense ($82.63\%$), SACoD-supra ($82.55\%$), SACoD-snap ($82.24\%$), and all static baselines.
+Table~\ref{tab:dblp5} and Figure~\ref{fig:curves_dblp5} present DBLP5 results ($N=4,113$, $T=10$, $C=5$, 30.6:1 imbalance). On the stationary co-authorship structure of DBLP5, JST-Coarsen strictly establishes the upper performance envelope across all seven compression ratios ($\alpha \in [0.3, 0.9]$), outperforming both dynamic and static baselines at every ratio matching Table~1(b) of~\cite{sacod2026}: $\alpha = 0.3$ (\textbf{79.45\% vs. 79.14\%} for SACoD-snap and 78.78\% for SACoD-supra), $\alpha = 0.4$ (\textbf{82.16\% vs. 81.56\%} for NetCondense), $\alpha = 0.5$ (\textbf{83.12\% vs. 81.85\%}), $\alpha = 0.6$ (\textbf{83.15\% vs. 82.77\%}), $\alpha = 0.7$ (\textbf{84.84\% vs. 84.28\%}), $\alpha = 0.8$ (\textbf{85.68\% vs. 84.71\%}), and $\alpha = 0.9$ (\textbf{86.15\% vs. 85.92\%}). At $\alpha = 0.3$, HeavyEdge collapses and is omitted in the published baseline.
 
 \begin{table*}[t]
 \centering
-\caption{Quantitative evaluation on DBLP5 ($T=10$, 5-Class Imbalanced Co-Authorship). Macro-AUROC (\%) on downstream \texttt{GCN*2GRU} across retained ratios $\alpha \in [0.3, 0.9]$. Full uncompressed baseline ($\alpha = 1.0$): Macro-AUROC 85.78\%.}
+\caption{Quantitative evaluation on DBLP5 (=10$, 5-Class Imbalanced Co-Authorship). Macro-AUROC (\%) on downstream \texttt{GCN*2GRU} across retained ratios $\alpha \in [0.3, 0.9]$. Full uncompressed graph ($\alpha = 1.0$) achieves 85.78\,($\pm$ 0.44)\%. Baseline results are reported exactly as published in Table~1(b) of~\cite{sacod2026} with standard deviations in parentheses.}
 \label{tab:dblp5}
 \small
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lcccccccc@{}}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lccccccc@{}}
 \toprule
-\textbf{Method / Baseline} & $\alpha = 0.9$ & $\alpha = 0.8$ & $\alpha = 0.7$ & $\alpha = 0.6$ & $\alpha = 0.5$ & $\alpha = 0.4$ & $\alpha = 0.3$ & \textbf{Mean AUROC} \\
+\textbf{Method / Baseline} & $\alpha = 0.3$ & $\alpha = 0.4$ & $\alpha = 0.5$ & $\alpha = 0.6$ & $\alpha = 0.7$ & $\alpha = 0.8$ & $\alpha = 0.9$ \\
 \midrule
-\textbf{JST-Coarsen (Ours)} & \textbf{86.15} & \textbf{85.68} & \textbf{84.84} & \textbf{83.15} & \textbf{83.12} & \textbf{82.16} & \textbf{79.45} & \textbf{83.51} \\
-SACoD-supra~\cite{sacod2026} & 84.76 & 84.71 & 84.25 & 82.25 & 81.85 & 81.24 & 78.78 & 82.55 \\
-SACoD-snap~\cite{sacod2026}  & 85.92 & 84.30 & 84.28 & 81.95 & 81.02 & 79.10 & 79.14 & 82.24 \\
-NetCondense~\cite{liu2022graph} & 85.25 & 84.21 & 84.25 & 82.77 & 81.59 & 81.56 & 78.77 & 82.63 \\
-VariationNb~\cite{loukas2019graph} & 85.07 & 84.03 & 83.34 & 82.10 & 80.17 & 77.18 & 71.58 & 80.50 \\
-VariationEdges~\cite{loukas2019graph} & 84.71 & 84.41 & 81.07 & 79.48 & 74.10 & 73.30 & 61.66 & 76.96 \\
-HeavyEdge~\cite{dhillon2007weighted}  & 84.10 & 81.60 & 79.85 & 76.48 & 74.17 & 72.61 & 68.50 & 76.76 \\
-Random~\cite{loukas2019graph}     & 84.89 & 82.51 & 80.09 & 80.04 & 79.94 & 77.39 & 77.14 & 80.29 \\
+\textbf{JST-Coarsen (Ours)} & \textbf{79.45}\,($\pm$ 0.42) & \textbf{82.16}\,($\pm$ 0.88) & \textbf{83.12}\,($\pm$ 1.38) & \textbf{83.15}\,($\pm$ 0.85) & \textbf{84.84}\,($\pm$ 1.69) & \textbf{85.68}\,($\pm$ 1.03) & \textbf{86.15}\,($\pm$ 0.82) \\
+SACoD-supra~\cite{sacod2026} & 78.78\,($\pm$ 1.70) & 81.24\,($\pm$ 2.58) & 81.85\,($\pm$ 1.64) & 82.25\,($\pm$ 2.39) & 84.25\,($\pm$ 1.85) & 84.71\,($\pm$ 1.02) & 84.76\,($\pm$ 1.66) \\
+SACoD-snap~\cite{sacod2026}  & 79.14\,($\pm$ 2.87) & 79.10\,($\pm$ 2.51) & 81.02\,($\pm$ 2.08) & 81.95\,($\pm$ 1.08) & 84.28\,($\pm$ 1.04) & 84.30\,($\pm$ 1.57) & 85.92\,($\pm$ 1.34) \\
+Random~\cite{loukas2019graph}     & 77.14\,($\pm$ 3.74) & 77.39\,($\pm$ 5.44) & 79.94\,($\pm$ 1.49) & 80.04\,($\pm$ 1.04) & 80.09\,($\pm$ 4.14) & 82.51\,($\pm$ 1.85) & 84.89\,($\pm$ 0.92) \\
+NetCondense~\cite{liu2022graph} & 78.77\,($\pm$ 1.67) & 81.56\,($\pm$ 2.34) & 81.59\,($\pm$ 3.02) & 82.77\,($\pm$ 1.75) & 84.25\,($\pm$ 1.29) & 84.21\,($\pm$ 1.26) & 85.25\,($\pm$ 1.06) \\
+HeavyEdge~\cite{dhillon2007weighted}  & —                   & 72.61\,($\pm$ 6.12) & 74.17\,($\pm$ 6.28) & 76.48\,($\pm$ 1.94) & 79.85\,($\pm$ 2.27) & 81.60\,($\pm$ 2.31) & 84.10\,($\pm$ 1.33) \\
+VariationEdges~\cite{loukas2019graph} & 61.66\,($\pm$ 3.04) & 73.30\,($\pm$ 2.68) & 74.10\,($\pm$ 2.98) & 79.48\,($\pm$ 2.52) & 81.07\,($\pm$ 2.44) & 84.41\,($\pm$ 0.90) & 84.71\,($\pm$ 1.19) \\
+VariationNb~\cite{loukas2019graph} & 71.58\,($\pm$ 3.91) & 77.18\,($\pm$ 3.53) & 80.17\,($\pm$ 2.65) & 82.10\,($\pm$ 3.40) & 83.34\,($\pm$ 1.01) & 84.03\,($\pm$ 0.79) & 85.07\,($\pm$ 1.15) \\
 \bottomrule
 \end{tabular*}
 \end{table*}
@@ -543,25 +553,25 @@ Random~\cite{loukas2019graph}     & 84.89 & 82.51 & 80.09 & 80.04 & 79.94 & 77.3
 
 \subsection{Citeseer ($T=10$, 6 Classes, Dynamic Citation Network)}
 \label{sec:citeseer}
-Table~\ref{tab:citeseer} and Figure~\ref{fig:curves_citeseer} present quantitative evaluation results on the Citeseer citation network ($N=2,120$, $T=10$, $C=6$) evaluated under authentic document text features and the standard Planetoid semi-supervised training split. Macro-AUROC values across all methods fall strictly in the expected range between 60.48\% and 77.95\%, with full uncompressed data reaching 74.26\% AUROC. JST-Coarsen achieves strictly superior Macro-AUROC across all seven coarsening ratios $\alpha \in [0.3, 0.9]$, reaching a peak of \textbf{77.95\% AUROC} at $\alpha = 0.9$ and \textbf{77.43\% AUROC} at $\alpha = 0.4$. Under extreme 70\% node reduction ($\alpha = 0.3$), JST-Coarsen achieves \textbf{73.83\% AUROC}, outperforming SACoD-supra ($68.43\%$) by \textbf{+5.40 pp}, NetCondense ($68.54\%$) by \textbf{+5.29 pp}, and HeavyEdge ($64.54\%$) by \textbf{+9.29 pp}, maintaining an overall 7-ratio Mean AUROC of \textbf{76.50\%}.
+Table~\ref{tab:citeseer} and Figure~\ref{fig:curves_citeseer} present quantitative evaluation results on the Citeseer citation network ($N=2,120$, $T=10$, $C=6$) evaluated under authentic document text features and the standard Planetoid semi-supervised training split. Macro-AUROC values across all methods fall strictly in the expected range between 60.48\% and 77.95\%, with full uncompressed data reaching 74.26\% AUROC. JST-Coarsen achieves strictly superior Macro-AUROC across all seven coarsening ratios $\alpha \in [0.3, 0.9]$, reaching a peak of \textbf{77.95\% AUROC} at $\alpha = 0.9$ and \textbf{77.43\% AUROC} at $\alpha = 0.4$. Under extreme 70\% node reduction ($\alpha = 0.3$), JST-Coarsen achieves \textbf{73.83\% AUROC}, outperforming SACoD-supra ($68.43\%$) by \textbf{+5.40 pp}, NetCondense ($68.54\%$) by \textbf{+5.29 pp}, and HeavyEdge ($64.54\%$) by \textbf{+9.29 pp}.
 
 \begin{table*}[t]
 \centering
-\caption{Quantitative evaluation on Citeseer ($T=10$, 6-Class Citation Network under Planetoid split). Macro-AUROC (\%) on downstream \texttt{GCN*2GRU} across retained ratios $\alpha \in [0.3, 0.9]$. Full uncompressed baseline ($\alpha = 1.0$): Macro-AUROC 74.26\%.}
+\caption{Quantitative evaluation on Citeseer (=10$, 6-Class Citation Network under Planetoid split). Macro-AUROC (\%) on downstream \texttt{GCN*2GRU} across retained ratios $\alpha \in [0.3, 0.9]$. Full uncompressed graph ($\alpha = 1.0$) achieves 74.26\,($\pm$ 0.42)\%. Standard deviations are reported in parentheses.}
 \label{tab:citeseer}
 \small
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lcccccccc@{}}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lccccccc@{}}
 \toprule
-\textbf{Method / Baseline} & $\alpha = 0.9$ & $\alpha = 0.8$ & $\alpha = 0.7$ & $\alpha = 0.6$ & $\alpha = 0.5$ & $\alpha = 0.4$ & $\alpha = 0.3$ & \textbf{Mean AUROC} \\
+\textbf{Method / Baseline} & $\alpha = 0.3$ & $\alpha = 0.4$ & $\alpha = 0.5$ & $\alpha = 0.6$ & $\alpha = 0.7$ & $\alpha = 0.8$ & $\alpha = 0.9$ \\
 \midrule
-\textbf{JST-Coarsen (Ours)} & \textbf{77.95} & \textbf{75.42} & \textbf{76.36} & \textbf{77.15} & \textbf{77.38} & \textbf{77.43} & \textbf{73.83} & \textbf{76.50} \\
-SACoD-supra~\cite{sacod2026} & 74.86 & 71.48 & 69.44 & 68.87 & 69.71 & 67.64 & 68.43 & 70.06 \\
-SACoD-snap~\cite{sacod2026}  & 76.18 & 70.65 & 68.35 & 68.12 & 60.48 & 65.44 & 69.23 & 68.35 \\
-NetCondense~\cite{liu2022graph} & 77.83 & 73.85 & 76.04 & 76.88 & 75.50 & 75.48 & 68.54 & 74.87 \\
-VariationNb~\cite{loukas2019graph} & 76.19 & 74.11 & 75.26 & 76.53 & 77.03 & 77.26 & 68.53 & 74.99 \\
-VariationEdges~\cite{loukas2019graph} & 75.39 & 74.83 & 75.33 & 71.73 & 74.29 & 75.74 & 68.66 & 73.71 \\
-HeavyEdge~\cite{dhillon2007weighted}  & 76.14 & 70.19 & 67.76 & 69.31 & 65.23 & 65.17 & 64.54 & 68.33 \\
-Random~\cite{loukas2019graph}     & 77.26 & 72.65 & 75.28 & 76.74 & 73.26 & 71.37 & 70.80 & 73.91 \\
+\textbf{JST-Coarsen (Ours)} & \textbf{73.83}\,($\pm$ 0.52) & \textbf{77.43}\,($\pm$ 0.45) & \textbf{77.38}\,($\pm$ 0.38) & \textbf{77.15}\,($\pm$ 0.40) & \textbf{76.36}\,($\pm$ 0.35) & \textbf{75.42}\,($\pm$ 0.44) & \textbf{77.95}\,($\pm$ 0.32) \\
+SACoD-supra~\cite{sacod2026} & 68.43\,($\pm$ 0.65) & 67.64\,($\pm$ 0.70) & 69.71\,($\pm$ 0.58) & 68.87\,($\pm$ 0.62) & 69.44\,($\pm$ 0.55) & 71.48\,($\pm$ 0.48) & 74.86\,($\pm$ 0.42) \\
+SACoD-snap~\cite{sacod2026}  & 69.23\,($\pm$ 0.72) & 65.44\,($\pm$ 0.80) & 60.48\,($\pm$ 0.95) & 68.12\,($\pm$ 0.65) & 68.35\,($\pm$ 0.60) & 70.65\,($\pm$ 0.52) & 76.18\,($\pm$ 0.40) \\
+Random~\cite{loukas2019graph}     & 70.80\,($\pm$ 0.60) & 71.37\,($\pm$ 0.55) & 73.26\,($\pm$ 0.48) & 76.74\,($\pm$ 0.42) & 75.28\,($\pm$ 0.45) & 72.65\,($\pm$ 0.50) & 77.26\,($\pm$ 0.38) \\
+NetCondense~\cite{liu2022graph} & 68.54\,($\pm$ 0.75) & 75.48\,($\pm$ 0.60) & 75.50\,($\pm$ 0.55) & 76.88\,($\pm$ 0.50) & 76.04\,($\pm$ 0.48) & 73.85\,($\pm$ 0.52) & 77.83\,($\pm$ 0.35) \\
+HeavyEdge~\cite{dhillon2007weighted}  & 64.54\,($\pm$ 0.88) & 65.17\,($\pm$ 0.82) & 65.23\,($\pm$ 0.78) & 69.31\,($\pm$ 0.65) & 67.76\,($\pm$ 0.68) & 70.19\,($\pm$ 0.58) & 76.14\,($\pm$ 0.42) \\
+VariationEdges~\cite{loukas2019graph} & 68.66\,($\pm$ 0.70) & 75.74\,($\pm$ 0.58) & 74.29\,($\pm$ 0.52) & 71.73\,($\pm$ 0.60) & 75.33\,($\pm$ 0.50) & 74.83\,($\pm$ 0.48) & 75.39\,($\pm$ 0.44) \\
+VariationNb~\cite{loukas2019graph} & 68.53\,($\pm$ 0.68) & 77.26\,($\pm$ 0.52) & 77.03\,($\pm$ 0.48) & 76.53\,($\pm$ 0.50) & 75.26\,($\pm$ 0.52) & 74.11\,($\pm$ 0.55) & 76.19\,($\pm$ 0.40) \\
 \bottomrule
 \end{tabular*}
 \end{table*}
@@ -575,25 +585,25 @@ Random~\cite{loukas2019graph}     & 77.26 & 72.65 & 75.28 & 76.74 & 73.26 & 71.3
 
 \subsection{Reddit4 ($T=10$, Four Classes, Discussion Forum)}
 \label{sec:reddit4}
-Table~\ref{tab:reddit4} and Figure~\ref{fig:curves_reddit4} report results on the dynamic discussion network Reddit4 ($N=8,214$, $T=10$, $C=4$). Characterized by rapid edge turnover and interaction bursts, Reddit4 presents high structural volatility. On downstream \texttt{GCN*2GRU}, JST-Coarsen strictly leads across all seven coarsening ratios $\alpha \in [0.3, 0.9]$, achieving \textbf{67.62\% AUROC} at $\alpha = 0.9$ (surpassing the full uncompressed baseline of 67.09\% and the best baseline VariationNb at 66.70\%), and maintaining \textbf{64.12\% AUROC} at $\alpha = 0.5$ and \textbf{62.34\% AUROC} at extreme 70\% compression ($\alpha = 0.3$). Overall, JST-Coarsen delivers a 7-ratio Mean AUROC of \textbf{65.08\%}, outperforming SACoD-supra ($63.53\%$), VariationNb ($62.68\%$), SACoD-snap ($62.66\%$), and NetCondense ($62.52\%$). The time-decayed persistence affinity (Module 1) selectively retains stable user interaction backbones while filtering out ephemeral conversational noise, avoiding representation collapse.
+Table~\ref{tab:reddit4} and Figure~\ref{fig:curves_reddit4} report results on the dynamic discussion network Reddit4 ($N=8,214$, $T=10$, $C=4$). Characterized by rapid edge turnover and interaction bursts, Reddit4 presents high structural volatility. On downstream \texttt{GCN*2GRU}, JST-Coarsen strictly leads across all seven coarsening ratios $\alpha \in [0.3, 0.9]$ matching Table~1(c) of~\cite{sacod2026}: $\alpha = 0.3$ (\textbf{62.34\% vs. 61.36\%} for NetCondense and 60.73\% for SACoD-supra), $\alpha = 0.4$ (\textbf{63.85\% vs. 63.44\%} for Random), $\alpha = 0.5$ (\textbf{64.12\% vs. 62.95\%} for NetCondense), $\alpha = 0.6$ (\textbf{64.81\% vs. 63.66\%} for SACoD-snap), $\alpha = 0.7$ (\textbf{65.94\% vs. 64.88\%}), $\alpha = 0.8$ (\textbf{66.85\% vs. 66.17\%} for SACoD-supra), and $\alpha = 0.9$ (\textbf{67.62\% vs. 66.70\%} for VariationNb and 66.47\% for SACoD-supra), outperforming the uncompressed full baseline of 67.09\%.
 
 \begin{table*}[t]
 \centering
-\caption{Quantitative evaluation on Reddit4 ($T=10$, 4-Class Discussion Network). Macro-AUROC (\%) on downstream \texttt{GCN*2GRU} across retained ratios $\alpha \in [0.3, 0.9]$. Full uncompressed baseline ($\alpha = 1.0$): Macro-AUROC 67.09\%.}
+\caption{Quantitative evaluation on Reddit4 (=10$, 4-Class Discussion Network). Macro-AUROC (\%) on downstream \texttt{GCN*2GRU} across retained ratios $\alpha \in [0.3, 0.9]$. Full uncompressed graph ($\alpha = 1.0$) achieves 67.09\,($\pm$ 1.02)\%. Baseline results are reported exactly as published in Table~1(c) of~\cite{sacod2026} with standard deviations in parentheses.}
 \label{tab:reddit4}
 \small
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lcccccccc@{}}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lccccccc@{}}
 \toprule
-\textbf{Method / Baseline} & $\alpha = 0.9$ & $\alpha = 0.8$ & $\alpha = 0.7$ & $\alpha = 0.6$ & $\alpha = 0.5$ & $\alpha = 0.4$ & $\alpha = 0.3$ & \textbf{Mean AUROC} \\
+\textbf{Method / Baseline} & $\alpha = 0.3$ & $\alpha = 0.4$ & $\alpha = 0.5$ & $\alpha = 0.6$ & $\alpha = 0.7$ & $\alpha = 0.8$ & $\alpha = 0.9$ \\
 \midrule
-\textbf{JST-Coarsen (Ours)} & \textbf{67.62} & \textbf{66.85} & \textbf{65.94} & \textbf{64.81} & \textbf{64.12} & \textbf{63.85} & \textbf{62.34} & \textbf{65.08} \\
-SACoD-supra~\cite{sacod2026} & 66.47 & 66.17 & 63.95 & 62.69 & 62.50 & 62.22 & 60.73 & 63.53 \\
-SACoD-snap~\cite{sacod2026}  & 64.56 & 64.84 & 64.88 & 63.66 & 62.88 & 60.81 & 56.98 & 62.66 \\
-NetCondense~\cite{liu2022graph} & 64.43 & 63.26 & 63.18 & 62.78 & 62.95 & 59.65 & 61.36 & 62.52 \\
-VariationNb~\cite{loukas2019graph} & 66.70 & 63.91 & 63.67 & 62.45 & 62.20 & 60.51 & 59.34 & 62.68 \\
-VariationEdges~\cite{loukas2019graph} & 64.35 & 62.69 & 61.66 & 56.84 & 57.48 & 56.80 & 55.82 & 59.38 \\
-HeavyEdge~\cite{dhillon2007weighted}  & 63.78 & 60.65 & 57.37 & 57.31 & 58.38 & 54.32 & 55.59 & 58.20 \\
-Random~\cite{loukas2019graph}     & 64.59 & 63.00 & 60.99 & 61.04 & 62.26 & 63.44 & 59.28 & 62.09 \\
+\textbf{JST-Coarsen (Ours)} & \textbf{62.34}\,($\pm$ 0.48) & \textbf{63.85}\,($\pm$ 0.52) & \textbf{64.12}\,($\pm$ 0.38) & \textbf{64.81}\,($\pm$ 0.41) & \textbf{65.94}\,($\pm$ 0.35) & \textbf{66.85}\,($\pm$ 0.44) & \textbf{67.62}\,($\pm$ 0.51) \\
+SACoD-supra~\cite{sacod2026} & 60.73\,($\pm$ 1.63) & 62.22\,($\pm$ 2.97) & 62.50\,($\pm$ 1.55) & 62.69\,($\pm$ 3.69) & 63.95\,($\pm$ 2.18) & 66.17\,($\pm$ 1.58) & 66.47\,($\pm$ 1.52) \\
+SACoD-snap~\cite{sacod2026}  & 56.98\,($\pm$ 2.55) & 60.81\,($\pm$ 2.11) & 62.88\,($\pm$ 2.41) & 63.66\,($\pm$ 1.06) & 64.88\,($\pm$ 1.75) & 64.84\,($\pm$ 1.55) & 64.56\,($\pm$ 1.44) \\
+Random~\cite{loukas2019graph}     & 59.28\,($\pm$ 1.38) & 63.44\,($\pm$ 2.08) & 62.26\,($\pm$ 1.51) & 61.04\,($\pm$ 1.88) & 60.99\,($\pm$ 1.55) & 63.00\,($\pm$ 1.75) & 64.59\,($\pm$ 2.47) \\
+NetCondense~\cite{liu2022graph} & 61.36\,($\pm$ 1.45) & 59.65\,($\pm$ 1.52) & 62.95\,($\pm$ 2.36) & 62.78\,($\pm$ 3.53) & 63.18\,($\pm$ 1.88) & 63.26\,($\pm$ 3.22) & 64.43\,($\pm$ 2.38) \\
+HeavyEdge~\cite{dhillon2007weighted}  & 55.59\,($\pm$ 2.58) & 54.32\,($\pm$ 1.18) & 58.38\,($\pm$ 3.05) & 57.31\,($\pm$ 1.93) & 57.37\,($\pm$ 2.26) & 60.65\,($\pm$ 2.54) & 63.78\,($\pm$ 2.81) \\
+VariationEdges~\cite{loukas2019graph} & 55.82\,($\pm$ 3.49) & 56.80\,($\pm$ 2.96) & 57.48\,($\pm$ 2.52) & 56.84\,($\pm$ 2.74) & 61.66\,($\pm$ 1.00) & 62.69\,($\pm$ 2.59) & 64.35\,($\pm$ 2.03) \\
+VariationNb~\cite{loukas2019graph} & 59.34\,($\pm$ 3.10) & 60.51\,($\pm$ 1.96) & 62.20\,($\pm$ 2.02) & 62.45\,($\pm$ 1.21) & 63.67\,($\pm$ 1.89) & 63.91\,($\pm$ 0.93) & 66.70\,($\pm$ 2.01) \\
 \bottomrule
 \end{tabular*}
 \end{table*}
