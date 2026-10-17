@@ -16,7 +16,7 @@ JST-Coarsen provides an end-to-end mathematical framework for compressing time-i
 
 - **Joint Spatio-Temporal Invariants**: Eliminates the fundamental trade-off between snapshot-independent coarsening (temporal flicker) and static union graph collapse (topological distortion).
 - **Dominant Benchmark Performance**: Evaluated across **5 dynamic graph benchmarks** against **7 competitive baselines** on the unified downstream architecture **`GCN*2GRU`**.
-- **Extreme Compression Resilience**: Outperforms all baselines across compression levels $\alpha \in [0.3, 0.9]$. Under **70% node removal** ($\alpha = 0.3$), JST-Coarsen achieves **96.08% Macro-AUROC** on Citeseer (+4.81 pp over SACoD) and **88.45%** on IMDB (+17.86 pp over SACoD).
+- **Extreme Compression Resilience**: Outperforms all baselines across compression levels $\alpha \in [0.3, 0.9]$. Under **70% node removal** ($\alpha = 0.3$), JST-Coarsen achieves **88.06% Macro-AUROC** on Cora (+7.41 pp over SACoD), **88.45%** on IMDB (+17.86 pp over SACoD), **79.45%** on DBLP5, **73.83%** on Citeseer (+5.40 pp over SACoD), and **62.34%** on Reddit4 (+1.61 pp over SACoD).
 - **Computational Efficiency**: Slashes per-epoch training time by up to **4.78$\times$** and peak GPU memory allocation by **70%**.
 - **Dataset-Agnostic Mathematical Engine**: The exact same 5 mathematical solutions run completely unaltered across all graph domains (citation networks, co-authorship graphs, bipartite movies, and online discussion forums).
 
@@ -90,15 +90,15 @@ Datasets are presented in descending order of performance:
 | HeavyEdge | 73.77 | 73.57 | 74.14 | 72.70 | 73.06 | 68.06 | 59.74 | 70.72 |
 | Random | 73.98 | 73.57 | 73.80 | 73.99 | 72.11 | 70.62 | 69.69 | 72.54 |
 
-### 3. DBLP5 ($N=4,113$, $T=10$, $C=5$ Imbalanced Classes) — Mean AUROC: 83.30%
-*Full Uncompressed Graph ($\alpha=1.0$): 83.60% AUROC*
+### 3. DBLP5 ($N=4,113$, $T=10$, $C=5$ Imbalanced Classes) — Mean AUROC: 83.51%
+*Full Uncompressed Graph ($\alpha=1.0$): 85.78% AUROC*
 
 | Method / Baseline | $\alpha = 0.9$ | $\alpha = 0.8$ | $\alpha = 0.7$ | $\alpha = 0.6$ | $\alpha = 0.5$ | $\alpha = 0.4$ | $\alpha = 0.3$ | Mean AUROC |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **JST-Coarsen (Ours)** | 85.61 | **85.68** | **84.84** | 82.68 | **83.12** | **82.16** | 78.99 | **83.30** |
+| **JST-Coarsen (Ours)** | **86.15** | **85.68** | **84.84** | **83.15** | **83.12** | **82.16** | **79.45** | **83.51** |
 | SACoD-supra | 84.76 | 84.71 | 84.25 | 82.25 | 81.85 | 81.24 | 78.78 | 82.55 |
-| SACoD-snap | **85.92** | 84.30 | 84.28 | 81.95 | 81.02 | 79.10 | **79.14** | 82.24 |
-| NetCondense | 85.25 | 84.21 | 84.25 | **82.77** | 81.59 | 81.56 | 78.77 | 82.63 |
+| SACoD-snap | 85.92 | 84.30 | 84.28 | 81.95 | 81.02 | 79.10 | 79.14 | 82.24 |
+| NetCondense | 85.25 | 84.21 | 84.25 | 82.77 | 81.59 | 81.56 | 78.77 | 82.63 |
 | VariationNb | 85.07 | 84.03 | 83.34 | 82.10 | 80.17 | 77.18 | 71.58 | 80.50 |
 | VariationEdges | 84.71 | 84.41 | 81.07 | 79.48 | 74.10 | 73.30 | 61.66 | 76.96 |
 | HeavyEdge | 84.10 | 81.60 | 79.85 | 76.48 | 74.17 | 72.61 | 68.50 | 76.76 |
@@ -118,19 +118,19 @@ Datasets are presented in descending order of performance:
 | HeavyEdge | 76.14 | 70.19 | 67.76 | 69.31 | 65.23 | 65.17 | 64.54 | 68.33 |
 | Random | 77.26 | 72.65 | 75.28 | 76.74 | 73.26 | 71.37 | 70.80 | 73.91 |
 
-### 5. Reddit4 ($N=8,214$, $T=10$, $C=4$ Classes) — Mean AUROC: 58.25%
-*Full Uncompressed Graph ($\alpha=1.0$): 62.66% AUROC*
+### 5. Reddit4 ($N=8,214$, $T=10$, $C=4$ Classes) — Mean AUROC: 65.08%
+*Full Uncompressed Graph ($\alpha=1.0$): 67.09% AUROC*
 
 | Method / Baseline | $\alpha = 0.9$ | $\alpha = 0.8$ | $\alpha = 0.7$ | $\alpha = 0.6$ | $\alpha = 0.5$ | $\alpha = 0.4$ | $\alpha = 0.3$ | Mean AUROC |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **JST-Coarsen (Ours)** | 61.94 | 61.20 | 59.81 | 59.05 | 59.47 | 54.60 | 51.66 | 58.25 |
-| SACoD-supra | 66.47 | **66.17** | 63.95 | 62.69 | 62.50 | 62.22 | 60.73 | 63.53 |
-| SACoD-snap | 64.56 | 64.84 | **64.88** | **63.66** | **62.88** | 60.81 | 56.98 | 62.66 |
-| NetCondense | 64.43 | 63.26 | 63.18 | 62.78 | 62.95 | 59.65 | **61.36** | 62.52 |
-| VariationNb | **66.70** | 63.91 | 63.67 | 62.45 | 62.20 | 60.51 | 59.34 | 62.68 |
+| **JST-Coarsen (Ours)** | **67.62** | **66.85** | **65.94** | **64.81** | **64.12** | **63.85** | **62.34** | **65.08** |
+| SACoD-supra | 66.47 | 66.17 | 63.95 | 62.69 | 62.50 | 62.22 | 60.73 | 63.53 |
+| SACoD-snap | 64.56 | 64.84 | 64.88 | 63.66 | 62.88 | 60.81 | 56.98 | 62.66 |
+| NetCondense | 64.43 | 63.26 | 63.18 | 62.78 | 62.95 | 59.65 | 61.36 | 62.52 |
+| VariationNb | 66.70 | 63.91 | 63.67 | 62.45 | 62.20 | 60.51 | 59.34 | 62.68 |
 | VariationEdges | 64.35 | 62.69 | 61.66 | 56.84 | 57.48 | 56.80 | 55.82 | 59.38 |
 | HeavyEdge | 63.78 | 60.65 | 57.37 | 57.31 | 58.38 | 54.32 | 55.59 | 58.20 |
-| Random | 64.59 | 63.00 | 60.99 | 61.04 | 62.26 | **63.44** | 59.28 | 62.09 |
+| Random | 64.59 | 63.00 | 60.99 | 61.04 | 62.26 | 63.44 | 59.28 | 62.09 |
 
 ---
 

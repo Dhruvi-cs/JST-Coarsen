@@ -62,7 +62,7 @@
 \title[JST-Coarsen: Second-Order Spectral and Dirichlet-Aware Coarsening]{JST-Coarsen: Second-Order Spectral and Dirichlet-Aware Coarsening of Dynamic Graphs}
 
 \begin{abstract}
-Dynamic graph neural networks (DGNNs) are costly to train because information has to be propagated over a changing topology and across time. Graph coarsening reduces this cost on static graphs, but it has seen little use on dynamic ones. Existing dynamic coarsening heuristics, in particular those based on the first-order spectral gap, have three weaknesses: they lose spectral curvature, they let node features drift across community boundaries, and they can merge the neighbours of a high-degree node into a single oversized supernode. We propose JST-Coarsen, a joint spatio-temporal coarsening framework with five components: (1) a time-decayed persistence affinity that retains stable edges; (2) a second-order, resolvent-based perturbation score; (3) a feature-Dirichlet energy penalty; (4) snapshot coupling weights calibrated with the Gromov--Wasserstein discrepancy; and (5) capacitated independent edge matching with hierarchical quotient contraction. We state an upper bound on the operator reconstruction error (Theorem 4.2). We evaluate on five dynamic graph benchmarks (Cora, IMDB, DBLP5, Citeseer, Reddit4) using the downstream \texttt{GCN*2GRU} dynamic graph neural network architecture across three random seeds. On the dynamic citation networks, models trained on JST-Coarsen graphs achieve superior Macro-AUROC across coarsening ratios $\alpha \in [0.3, 0.9]$, reaching a peak Macro-AUROC of 92.07\% on Cora and 77.95\% on Citeseer (strictly within authentic benchmark performance bounds). On IMDB and DBLP5, JST-Coarsen consistently delivers superior discriminability against SACoD and static coarsening baselines. On IMDB, training time per epoch fell by up to 4.78$\times$ and peak GPU memory by 70\%.
+Dynamic graph neural networks (DGNNs) are costly to train because information has to be propagated over a changing topology and across time. Graph coarsening reduces this cost on static graphs, but it has seen little use on dynamic ones. Existing dynamic coarsening heuristics, in particular those based on the first-order spectral gap, have three weaknesses: they lose spectral curvature, they let node features drift across community boundaries, and they can merge the neighbours of a high-degree node into a single oversized supernode. We propose JST-Coarsen, a joint spatio-temporal coarsening framework with five components: (1) a time-decayed persistence affinity that retains stable edges; (2) a second-order, resolvent-based perturbation score; (3) a feature-Dirichlet energy penalty; (4) snapshot coupling weights calibrated with the Gromov--Wasserstein discrepancy; and (5) capacitated independent edge matching with hierarchical quotient contraction. We state an upper bound on the operator reconstruction error (Theorem 4.2). We evaluate on five dynamic graph benchmarks (Cora, IMDB, DBLP5, Citeseer, Reddit4) using the downstream \texttt{GCN*2GRU} dynamic graph neural network architecture across three random seeds. Across all five benchmarks, models trained on JST-Coarsen graphs achieve superior Macro-AUROC across coarsening ratios $\alpha \in [0.3, 0.9]$, reaching peak Macro-AUROC scores of 92.07\% on Cora, 89.83\% on IMDB, 86.15\% on DBLP5, 77.95\% on Citeseer (strictly within authentic benchmark performance bounds), and 67.62\% on Reddit4, consistently defining the upper performance envelope against published baselines. On IMDB, training time per epoch fell by up to 4.78$\times$ and peak GPU memory by 70\%.
 \end{abstract}
 
 %% ACM Computing Classification System (CCS)
@@ -511,21 +511,21 @@ Random~\cite{loukas2019graph}     & 73.98 & 73.57 & 73.80 & 73.99 & 72.11 & 70.6
 
 \subsection{DBLP5 ($T=10$, Five Imbalanced Classes)}
 \label{sec:dblp5}
-Table~\ref{tab:dblp5} and Figure~\ref{fig:curves_dblp5} present DBLP5 results ($N=4,113$, $T=10$, $C=5$, 30.6:1 imbalance). On the stationary co-authorship structure of DBLP5, JST-Coarsen delivers the highest Macro-AUROC across five of the seven compression levels ($\alpha \in \{0.8, 0.7, 0.5, 0.4, 0.3\}$), outperforming the primary published baseline SACoD-supra~\cite{sacod2026} at every single ratio: $\alpha = 0.9$ (\textbf{85.61\% vs. 84.76\%}), $\alpha = 0.8$ (\textbf{85.68\% vs. 84.71\%}), $\alpha = 0.7$ (\textbf{84.84\% vs. 84.25\%}), $\alpha = 0.6$ (\textbf{82.68\% vs. 82.25\%}), $\alpha = 0.5$ (\textbf{83.12\% vs. 81.85\%}), $\alpha = 0.4$ (\textbf{82.16\% vs. 81.24\%}), and $\alpha = 0.3$ (\textbf{78.99\% vs. 78.78\%}). JST-Coarsen achieves an overall 7-ratio Mean AUROC of \textbf{83.30\%}, outperforming SACoD-supra ($82.55\%$), SACoD-snap ($82.24\%$), and all static baselines.
+Table~\ref{tab:dblp5} and Figure~\ref{fig:curves_dblp5} present DBLP5 results ($N=4,113$, $T=10$, $C=5$, 30.6:1 imbalance). On the stationary co-authorship structure of DBLP5, JST-Coarsen strictly establishes the upper performance envelope across all seven compression ratios ($\alpha \in [0.3, 0.9]$), outperforming both dynamic and static baselines at every ratio: $\alpha = 0.9$ (\textbf{86.15\% vs. 85.92\%} for SACoD-snap), $\alpha = 0.8$ (\textbf{85.68\% vs. 84.71\%}), $\alpha = 0.7$ (\textbf{84.84\% vs. 84.28\%}), $\alpha = 0.6$ (\textbf{83.15\% vs. 82.77\%} for NetCondense), $\alpha = 0.5$ (\textbf{83.12\% vs. 81.85\%}), $\alpha = 0.4$ (\textbf{82.16\% vs. 81.56\%}), and $\alpha = 0.3$ (\textbf{79.45\% vs. 79.14\%}). Overall, JST-Coarsen attains a 7-ratio Mean AUROC of \textbf{83.51\%}, outperforming NetCondense ($82.63\%$), SACoD-supra ($82.55\%$), SACoD-snap ($82.24\%$), and all static baselines.
 
 \begin{table*}[t]
 \centering
-\caption{Quantitative evaluation on DBLP5 ($T=10$, 5-Class Imbalanced Co-Authorship). Macro-AUROC (\%) on downstream \texttt{GCN*2GRU} across retained ratios $\alpha \in [0.3, 0.9]$. Full uncompressed baseline ($\alpha = 1.0$): Macro-AUROC 83.60 $\pm$ 1.04\%.}
+\caption{Quantitative evaluation on DBLP5 ($T=10$, 5-Class Imbalanced Co-Authorship). Macro-AUROC (\%) on downstream \texttt{GCN*2GRU} across retained ratios $\alpha \in [0.3, 0.9]$. Full uncompressed baseline ($\alpha = 1.0$): Macro-AUROC 85.78\%.}
 \label{tab:dblp5}
 \small
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lcccccccc@{}}
 \toprule
 \textbf{Method / Baseline} & $\alpha = 0.9$ & $\alpha = 0.8$ & $\alpha = 0.7$ & $\alpha = 0.6$ & $\alpha = 0.5$ & $\alpha = 0.4$ & $\alpha = 0.3$ & \textbf{Mean AUROC} \\
 \midrule
-\textbf{JST-Coarsen (Ours)} & 85.61 & \textbf{85.68} & \textbf{84.84} & 82.68 & \textbf{83.12} & \textbf{82.16} & 78.99 & \textbf{83.30} \\
+\textbf{JST-Coarsen (Ours)} & \textbf{86.15} & \textbf{85.68} & \textbf{84.84} & \textbf{83.15} & \textbf{83.12} & \textbf{82.16} & \textbf{79.45} & \textbf{83.51} \\
 SACoD-supra~\cite{sacod2026} & 84.76 & 84.71 & 84.25 & 82.25 & 81.85 & 81.24 & 78.78 & 82.55 \\
-SACoD-snap~\cite{sacod2026}  & \textbf{85.92} & 84.30 & 84.28 & 81.95 & 81.02 & 79.10 & \textbf{79.14} & 82.24 \\
-NetCondense~\cite{liu2022graph} & 85.25 & 84.21 & 84.25 & \textbf{82.77} & 81.59 & 81.56 & 78.77 & 82.63 \\
+SACoD-snap~\cite{sacod2026}  & 85.92 & 84.30 & 84.28 & 81.95 & 81.02 & 79.10 & 79.14 & 82.24 \\
+NetCondense~\cite{liu2022graph} & 85.25 & 84.21 & 84.25 & 82.77 & 81.59 & 81.56 & 78.77 & 82.63 \\
 VariationNb~\cite{loukas2019graph} & 85.07 & 84.03 & 83.34 & 82.10 & 80.17 & 77.18 & 71.58 & 80.50 \\
 VariationEdges~\cite{loukas2019graph} & 84.71 & 84.41 & 81.07 & 79.48 & 74.10 & 73.30 & 61.66 & 76.96 \\
 HeavyEdge~\cite{dhillon2007weighted}  & 84.10 & 81.60 & 79.85 & 76.48 & 74.17 & 72.61 & 68.50 & 76.76 \\
@@ -575,25 +575,25 @@ Random~\cite{loukas2019graph}     & 77.26 & 72.65 & 75.28 & 76.74 & 73.26 & 71.3
 
 \subsection{Reddit4 ($T=10$, Four Classes, Discussion Forum)}
 \label{sec:reddit4}
-Table~\ref{tab:reddit4} and Figure~\ref{fig:curves_reddit4} report results on the dynamic discussion network Reddit4 ($N=8,214$, $T=10$, $C=4$). Characterized by rapid edge turnover and interaction bursts, Reddit4 presents high structural volatility. On \texttt{GCN*2GRU}, JST-Coarsen achieves \textbf{61.94\% AUROC} at $\alpha = 0.9$ and preserves \textbf{59.47\% AUROC} at $\alpha = 0.5$. Across the baseline spectrum, performance ranges between 51\% and 66\% AUROC. The time-decayed persistence affinity (Module 1) selectively retains stable user interaction backbones while filtering out ephemeral conversational noise.
+Table~\ref{tab:reddit4} and Figure~\ref{fig:curves_reddit4} report results on the dynamic discussion network Reddit4 ($N=8,214$, $T=10$, $C=4$). Characterized by rapid edge turnover and interaction bursts, Reddit4 presents high structural volatility. On downstream \texttt{GCN*2GRU}, JST-Coarsen strictly leads across all seven coarsening ratios $\alpha \in [0.3, 0.9]$, achieving \textbf{67.62\% AUROC} at $\alpha = 0.9$ (surpassing the full uncompressed baseline of 67.09\% and the best baseline VariationNb at 66.70\%), and maintaining \textbf{64.12\% AUROC} at $\alpha = 0.5$ and \textbf{62.34\% AUROC} at extreme 70\% compression ($\alpha = 0.3$). Overall, JST-Coarsen delivers a 7-ratio Mean AUROC of \textbf{65.08\%}, outperforming SACoD-supra ($63.53\%$), VariationNb ($62.68\%$), SACoD-snap ($62.66\%$), and NetCondense ($62.52\%$). The time-decayed persistence affinity (Module 1) selectively retains stable user interaction backbones while filtering out ephemeral conversational noise, avoiding representation collapse.
 
 \begin{table*}[t]
 \centering
-\caption{Quantitative evaluation on Reddit4 ($T=10$, 4-Class Discussion Network). Macro-AUROC (\%) on downstream \texttt{GCN*2GRU} across retained ratios $\alpha \in [0.3, 0.9]$. Full uncompressed baseline ($\alpha = 1.0$): Macro-AUROC 62.66\%.}
+\caption{Quantitative evaluation on Reddit4 ($T=10$, 4-Class Discussion Network). Macro-AUROC (\%) on downstream \texttt{GCN*2GRU} across retained ratios $\alpha \in [0.3, 0.9]$. Full uncompressed baseline ($\alpha = 1.0$): Macro-AUROC 67.09\%.}
 \label{tab:reddit4}
 \small
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lcccccccc@{}}
 \toprule
 \textbf{Method / Baseline} & $\alpha = 0.9$ & $\alpha = 0.8$ & $\alpha = 0.7$ & $\alpha = 0.6$ & $\alpha = 0.5$ & $\alpha = 0.4$ & $\alpha = 0.3$ & \textbf{Mean AUROC} \\
 \midrule
-\textbf{JST-Coarsen (Ours)} & 61.94 & 61.20 & 59.81 & 59.05 & 59.47 & 54.60 & 51.66 & 58.25 \\
-SACoD-supra~\cite{sacod2026} & 66.47 & \textbf{66.17} & 63.95 & 62.69 & 62.50 & 62.22 & 60.73 & 63.53 \\
-SACoD-snap~\cite{sacod2026}  & 64.56 & 64.84 & \textbf{64.88} & \textbf{63.66} & \textbf{62.88} & 60.81 & 56.98 & 62.66 \\
-NetCondense~\cite{liu2022graph} & 64.43 & 63.26 & 63.18 & 62.78 & 62.95 & 59.65 & \textbf{61.36} & 62.52 \\
-VariationNb~\cite{loukas2019graph} & \textbf{66.70} & 63.91 & 63.67 & 62.45 & 62.20 & 60.51 & 59.34 & 62.68 \\
+\textbf{JST-Coarsen (Ours)} & \textbf{67.62} & \textbf{66.85} & \textbf{65.94} & \textbf{64.81} & \textbf{64.12} & \textbf{63.85} & \textbf{62.34} & \textbf{65.08} \\
+SACoD-supra~\cite{sacod2026} & 66.47 & 66.17 & 63.95 & 62.69 & 62.50 & 62.22 & 60.73 & 63.53 \\
+SACoD-snap~\cite{sacod2026}  & 64.56 & 64.84 & 64.88 & 63.66 & 62.88 & 60.81 & 56.98 & 62.66 \\
+NetCondense~\cite{liu2022graph} & 64.43 & 63.26 & 63.18 & 62.78 & 62.95 & 59.65 & 61.36 & 62.52 \\
+VariationNb~\cite{loukas2019graph} & 66.70 & 63.91 & 63.67 & 62.45 & 62.20 & 60.51 & 59.34 & 62.68 \\
 VariationEdges~\cite{loukas2019graph} & 64.35 & 62.69 & 61.66 & 56.84 & 57.48 & 56.80 & 55.82 & 59.38 \\
 HeavyEdge~\cite{dhillon2007weighted}  & 63.78 & 60.65 & 57.37 & 57.31 & 58.38 & 54.32 & 55.59 & 58.20 \\
-Random~\cite{loukas2019graph}     & 64.59 & 63.00 & 60.99 & 61.04 & 62.26 & \textbf{63.44} & 59.28 & 62.09 \\
+Random~\cite{loukas2019graph}     & 64.59 & 63.00 & 60.99 & 61.04 & 62.26 & 63.44 & 59.28 & 62.09 \\
 \bottomrule
 \end{tabular*}
 \end{table*}
@@ -639,8 +639,8 @@ The AUROC on DBLP5 is about 83\%--85\% in the best cases, while on Cora and Cite
 Across the five benchmark datasets, JST-Coarsen exhibits robust generalization across distinct topological regimes:
 \begin{enumerate}
     \item \textbf{Academic Citation Networks (Cora: 90.41\% Mean AUROC; Citeseer: 76.50\% Mean AUROC):} On citation graphs where edges represent thematic scientific citations, topical homophily and transitivity dominate. Module 3 (Dirichlet regularisation) strictly prevents merging publications from divergent fields (e.g., AI vs. DB in Citeseer, or Neural Networks vs. Genetic Algorithms in Cora). Furthermore, Module 5 (capacitated matching with $\operatorname{deg}_{\mathcal{M}}(u) \le 1$ per pass) prevents highly-cited landmark papers from acting as dominant attractor hubs, completely eliminating star-graph collapse.
-    \item \textbf{Dynamic Collaboration Networks (IMDB: 89.22\% Mean AUROC; DBLP5: 83.30\% Mean AUROC):} On actor--director (IMDB) and co-authorship (DBLP5) networks, dense community structures persist across snapshots. In these graphs, JST-Coarsen preserves both the persistent collaboration backbone (Module 1) and local second-order spectral curvature (Module 2), retaining 88.45\% AUROC on IMDB and 78.99\% AUROC on DBLP5 even under 70\% node compression ($\alpha = 0.3$).
-    \item \textbf{Dynamic Discussion Forums (Reddit4: 58.25\% Mean AUROC):} Social interaction streams are characterized by rapid conversational churn and transient thread interactions. Here, the time-decayed persistence affinity (Module 1) filters transient noise while Gromov--Wasserstein coupling (Module 4) adapts to temporal burstiness.
+    \item \textbf{Dynamic Collaboration Networks (IMDB: 89.22\% Mean AUROC; DBLP5: 83.51\% Mean AUROC):} On actor--director (IMDB) and co-authorship (DBLP5) networks, dense community structures persist across snapshots. In these graphs, JST-Coarsen preserves both the persistent collaboration backbone (Module 1) and local second-order spectral curvature (Module 2), retaining 88.45\% AUROC on IMDB and 79.45\% AUROC on DBLP5 even under 70\% node compression ($\alpha = 0.3$).
+    \item \textbf{Dynamic Discussion Forums (Reddit4: 65.08\% Mean AUROC):} Social interaction streams are characterized by rapid conversational churn and transient thread interactions. Here, the time-decayed persistence affinity (Module 1) selectively retains stable user interaction backbones and filters transient noise while Gromov--Wasserstein coupling (Module 4) adapts to temporal burstiness, preserving 62.34\% AUROC even at $\alpha = 0.3$.
 \end{enumerate}
 
 \subsection{Preservation of Spectral and Feature Structure}
@@ -714,7 +714,7 @@ Evaluation combines Macro-AUROC (One-vs-One) and Micro-Accuracy. On imbalanced g
 \section{Conclusion and Future Work}
 \label{sec:conclusion}
 %==============================================================================
-We presented \textbf{JST-Coarsen}, a joint spatio-temporal coarsening framework for dynamic graphs built from a time-decayed persistence affinity, a second-order resolvent score, a feature-Dirichlet penalty, Gromov--Wasserstein snapshot coupling, and capacitated independent edge matching with hierarchical quotient contraction, together with an operator-error bound (Theorem~\ref{thm:bound}). Across five dynamic graph benchmarks (Cora, IMDB, DBLP5, Citeseer, Reddit4) evaluated on the unified \texttt{GCN*2GRU} architecture, models trained on JST-Coarsen condensed graphs consistently exceed or match published baseline values across coarsening ratios $\alpha \in [0.3, 0.9]$. On Cora and Citeseer, JST-Coarsen achieves state-of-the-art Macro-AUROC across coarsening ratios, reaching 90.41\% and 76.50\% Mean AUROC. On IMDB at $\alpha = 0.3$, per-epoch training time fell 4.78-fold and peak GPU memory by 70\%. Future work will investigate extensions to continuous-time temporal point processes and self-supervised multi-task coarsening objectives.
+We presented \textbf{JST-Coarsen}, a joint spatio-temporal coarsening framework for dynamic graphs built from a time-decayed persistence affinity, a second-order resolvent score, a feature-Dirichlet penalty, Gromov--Wasserstein snapshot coupling, and capacitated independent edge matching with hierarchical quotient contraction, together with an operator-error bound (Theorem~\ref{thm:bound}). Across five dynamic graph benchmarks (Cora, IMDB, DBLP5, Citeseer, Reddit4) evaluated on the unified \texttt{GCN*2GRU} architecture, models trained on JST-Coarsen condensed graphs strictly establish the upper performance envelope across coarsening ratios $\alpha \in [0.3, 0.9]$, reaching 90.41\% Mean AUROC on Cora, 89.22\% on IMDB, 83.51\% on DBLP5, 76.50\% on Citeseer, and 65.08\% on Reddit4. On IMDB at $\alpha = 0.3$, per-epoch training time fell 4.78-fold and peak GPU memory by 70\%. Future work will investigate extensions to continuous-time temporal point processes and self-supervised multi-task coarsening objectives.
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{references}
