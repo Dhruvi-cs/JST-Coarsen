@@ -1,0 +1,120 @@
+# AI *
+# ML *
+# DAT = DataStructureAlgorithmsAndTheory *
+# HA = HardwareArchitecture *
+# HCI = HumanComputerInteraction *
+# IR = InformationRetrieval *
+# EC = EncryptionAndCompression *
+# OS *
+# DM = DataMining *
+# ES = ExpertSystems *
+# GS = GamesandSearch *
+# KR = KnowledgeRepresentation *
+# CB = Case-Based *
+# GA = GeneticAlgorithms *
+# NN *
+# PM = ProbabilisticMethods *
+# REL = ReinforcementLearning *
+# RUL = RuleLearning *
+# TP = TheoremProving *
+# VPR = VisionandPatternRecognition *
+# CC = ComputationalComplexity *
+# CG = ComputationalGeometry *
+# FL = FormalLanguages *
+# QC = QuantumComputing *
+# OO *
+# QE = QueryEvaluation *
+# DA = DistributedArchitectures *
+# HPC = HighPerformanceComputing *
+# IOS = InputOutputandStorage *
+# LD = LogicDesign *
+# MS = MemoryStructures *
+# MP = Microprogramming
+# GVR = GraphicsandVirtualReality *
+# ID = InterfaceDesign *
+# WC = WearableComputers
+# DL = DigitalLibrary *
+# FT = FaultTolerance *
+# MM = MemoryManagement *
+# CD = CompilerDesign *
+# GC = GarbageCollection *
+# SD = SoftwareDevelopment *
+AI
+ML
+PROGRAMMING
+DAT
+OS
+HCI
+NETWORKING
+NN
+DATABASES
+VPR
+HA
+EC
+MM
+ROBOTICS
+DISTRIBUTED
+GVR
+CD
+SD
+AGENTS
+OO
+PLANNING
+LOGIC
+PROTOCOLS
+CC
+PM
+GA
+GS
+IR
+PARALLEL
+REALTIME
+THEORY
+NLP
+TP
+ENCRYPTION
+COMPRESSION
+CB
+SPEECH
+LD
+FUNCTIONAL
+ROUTING
+CG
+DEBUGGING
+MULTIMEDIA
+QC
+REL
+INTERNET
+KR
+RETRIEVAL
+JAVA
+VLSI
+RANDOMIZED
+RUL
+DM
+FL
+GC
+FT
+SECURITY
+ID
+SORTING
+ES
+CONCURRENCY
+SEMANTICS
+PERFORMANCE
+WIRELESS
+QE
+RELATIONAL
+MS
+DEDUCTIVE
+DL
+TEMPORAL
+HASHING
+HPC
+COOPERATIVE
+IOS
+WC
+EXTRACTION
+FILTERING
+DA
+MP

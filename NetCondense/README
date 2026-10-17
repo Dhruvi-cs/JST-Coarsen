@@ -1,0 +1,58 @@
+README authors: Bijaya Adhikari, Yao Zhang, and B. Aditya Prakash.
+Dated: Januray 17, 2017. 
+
+
+This is a reference implementation of the netCondense algorithm described in the following paper.
+
+Condensing Temporal Networks using Propagation
+Bijaya Adhikari, Yao Zhang, Aditya Bharadwaj, and B. Aditya Prakash
+In 2017 SIAM International Conference on Data Mining (SDM 2017), April 2017, Houston, Texas.
+
+
+Given a temporal network, netCondense returns a condensed temporal network with similar diffusive characteristics as the original network.
+Please check the paper for more detail.
+
+==========================================================================================================================================================================================
+
+Requirement: Matlab
+
+
+To see a Demo: 
+   make demo
+   
+Please make sure that you have set the correct matlab path in makefile before execution. In my system, matlab path is /raid/R2014A/bin/matlab
+
+Execute:
+   python netCondense.py edgelist alpha_N alpha_T matlab_path
+
+Example: python netCondense.py example\toy 0.9 0.5 matlab_path
+
+
+==========================================================================================================================================================================================
+Input:
+
+edgelist:
+time-stamp node_1 node_2 probability_1_to_2 probability_2_to_1 
+1 1 2 0.1 0.2
+
+alpha_N: a real number between 0 and 1 representing node reduction factor
+alpha_T: a real number between 0 and 1 representing time reduction factor
+
+================================================================================================================================================================================================
+Output:
+
+edgelist__final: the generated summary graph (edgelist with weights)
+
+edgelist_superNodes: map for supernodes 10: 21, 32, 49, 35 means that nodes 10, 21, 32, 49, and 35 were merged and the super-node has id 10. 
+
+edgelist_superTimes: map for supertoimes 1: 2, 3 means that time-stamps 1, 2, and 3 were merged and the super-time has id 1. 
+
+edgelist_edgeScores: delta-scores for each edge in the union graph
+
+edgelist_timeScores: delta-scores for each time-pairs
+
+
+================================================================================================================================================================================================
+Contact:
+
+If you have any questions about the code, please contact Bijaya Adhikari at bijaya[at]cs[dot]vt[dot]edu 

@@ -1,0 +1,33 @@
+﻿# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Caches and checkpoints
+.pytest_cache/
+.cache/
+math_cache/
+*.pkl
+*.npy
+*.pth
+*.pt
+
+# OS specific files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Output scratch & logs
+log/
+*.log
+desktop_project_files_backup/
+results/intermediate/
+Loukas-graph-coarsening/results/
