@@ -107,17 +107,17 @@ Dynamic graph neural networks (DGNNs) are costly to train because information ha
 %==============================================================================
 Relational data in finance, citation networks, social platforms and bio-molecular dynamics change continuously and are naturally modelled as dynamic graphs. DGNNs~\cite{kipf2017semi,pareja2020evolvegcn,rossi2020temporal,sankar2020dysat,wang2023continuous,xiao2022decoupled,xu2020inductive} handle such data by combining neighbourhood message passing with temporal recurrence over a sequence of discrete snapshots $\mathcal{G} = \{\mathcal{G}_1, \dots, \mathcal{G}_T\}$. Training over $T$ snapshots costs $\mathcal{O}\left(\sum_{t=1}^T |\mathcal{E}_t| d + N_t d^2\right)$, where $N_t$, $|\mathcal{E}_t|$ and $d$ are the number of vertices, the number of edges and the feature dimension~\cite{pareja2020evolvegcn,sacod2026}. When graphs grow to tens of thousands of nodes over dozens of time steps, memory use and the unrolled gradient computation quickly exceed the capacity of current GPUs.
 
-For static graphs, coarsening and condensation have reduced this cost considerably~\cite{jin2021graph,liu2022graph,loukas2019graph,loukas2020survey,zheng2023structure}. Coarsening merges structurally redundant vertices, whereas condensation learns a small synthetic graph by matching training trajectories. Neither carries over directly to dynamic graphs. Trajectory matching over a snapshot sequence multiplies the gradient computation by $T^2$, which makes dynamic condensation impractical~\cite{jin2021graph,liu2024gcore}. SACoD~\cite{sacod2026} recently introduced spectral-gap coarsening for dynamic graphs, which aims to preserve algebraic connectivity over multi-slice supra-Laplacians. We identify three limitations in this and similar heuristics:
+For static graphs, coarsening and condensation have reduced this cost considerably~\cite{jin2021graph,liu2022graph,loukas2019graph,loukas2020survey,zheng2023structure}. Coarsening merges structurally redundant vertices, whereas condensation learns a small synthetic graph by matching training trajectories. Neither carries over directly to dynamic graphs. Trajectory matching over a snapshot sequence multiplies the gradient computation by $T^2$, which makes dynamic condensation impractical~\cite{jin2021graph,liu2024gcore}. SACoD~\cite{sacod2026} recently introduced spectral-gap coarsening for dynamic graphs, which aims to preserve algebraic connectivity over multi-slice dynamic Laplacians. We identify three limitations in this and similar heuristics:
 \begin{itemize}
-    \item \textbf{First-order truncation.} The selection criteria stop the eigenvalue perturbation at the first-order Rayleigh quotient. By dropping the second-order resolvent term $(\mathcal{L}_{\text{supra}} - \lambda_m I)^\dagger$, they ignore spectral resolvent curvature that governs eigenvalue shifts under large edge contractions~\cite{sacod2026}, while neglecting discrete curvature bottlenecks known to induce over-squashing~\cite{topping2022understanding}. This omission can accumulate into spectral distortion and non-monotone collapse of eigenvalues.
+    \item \textbf{First-order truncation.} The selection criteria stop the eigenvalue perturbation at the first-order Rayleigh quotient. By dropping the second-order resolvent term $(\mathcal{L} - \lambda_m I)^\dagger$, they ignore spectral resolvent curvature that governs eigenvalue shifts under large edge contractions~\cite{sacod2026}, while neglecting discrete curvature bottlenecks known to induce over-squashing~\cite{topping2022understanding}. This omission can accumulate into spectral distortion and non-monotone collapse of eigenvalues.
     \item \textbf{Feature-blind merging.} Heuristics that use only structural adjacency ignore local feature gradients. On attributed graphs with strong class imbalance, contracting nodes on connectivity alone merges nodes of different classes, lowers the Dirichlet energy~\cite{chamberlain2021grand,digiovanni2023oversquashing,rusch2023survey} and removes the signal of minority classes.
     \item \textbf{Greedy DSU star collapse.} Contracting nodes with an unconstrained disjoint set union (DSU) on the static union graph lets high-degree hubs absorb their neighbours into very large supernodes. This changes the degree distribution and distorts the graph diameter on which message propagation depends.
 \end{itemize}
 
 To address these problems we introduce \textbf{JST-Coarsen} (Joint Spatio-Temporal Dynamic Graph Coarsening), a data-centric framework designed to preserve spectral geometry, semantic feature trajectories and local degree uniformity across a dynamic graph sequence. Our contributions are:
 \begin{itemize}
-    \item \textbf{Persistence backbone and Gromov--Wasserstein coupling.} An exponentially time-decayed persistence affinity filters transient edges (new), and Gromov--Wasserstein optimal transport sets the continuity weights between snapshots (new adaptation to supra-Laplacian coupling).
-    \item \textbf{Second-order resolvent perturbation score.} We give a closed-form second-order eigenvalue perturbation expression for the supra-Laplacian, evaluated on local 1-hop boundary sums (Lemma~\ref{lem:resolvent}), which captures the second-order curvature at no extra asymptotic cost per candidate edge (new derivation).
+    \item \textbf{Persistence backbone and Gromov--Wasserstein coupling.} An exponentially time-decayed persistence affinity filters transient edges (new), and Gromov--Wasserstein optimal transport sets the continuity weights between snapshots (new adaptation to dynamic Laplacian coupling).
+    \item \textbf{Second-order resolvent perturbation score.} We give a closed-form second-order eigenvalue perturbation expression for the dynamic Laplacian $\mathcal{L}$, evaluated on local 1-hop boundary sums (Lemma~\ref{lem:resolvent}), which captures the second-order curvature at no extra asymptotic cost per candidate edge (new derivation).
     \item \textbf{Dirichlet regularisation and capacitated matching.} A feature-Dirichlet energy drift penalty discourages the absorption of minority-class nodes (new). Contractions are chosen by capacitated independent edge matching with quotient contraction, which bounds supernode size (modified heavy-edge matching).
     \item \textbf{Empirical evaluation.} On five dynamic graph benchmarks (Citeseer, Cora, IMDB, DBLP5, Reddit4), downstream DGNNs trained on JST-Coarsen graphs are evaluated across seven coarsening ratios against seven established baselines (Section~\ref{sec:results}), together with runtime and memory measurements (Sections~\ref{sec:throughput} and~\ref{sec:runtime}).
 \end{itemize}
@@ -136,23 +136,23 @@ Methods for shrinking a graph fall into two groups. Condensation methods learn a
 Coarsening instead keeps the physical topology and groups vertices into supernodes according to spectral invariants~\cite{loukas2019graph,loukas2020survey}. Loukas~\cite{loukas2019graph} gave the foundational static spectral guarantees, and Cai et al.~\cite{cai2021graph} investigated graph coarsening with neural networks. Applying static coarsening to each snapshot separately, however, ignores edge persistence over time and breaks communication between snapshots.
 
 \subsection{Perturbation Truncation, Curvature and Semantic Collapse}
-SACoD~\cite{sacod2026} extended coarsening to dynamic graphs through a first-order perturbation of the supra-Laplacian. Two weaknesses follow from that design. First, truncating the eigenvalue shift at the first-order Rayleigh quotient discards the resolvent term $(\mathcal{L}_{\text{supra}} - \lambda_2 I)^\dagger$. Topping et al.~\cite{topping2022understanding} and Di Giovanni et al.~\cite{digiovanni2023oversquashing} tie information bottlenecks and over-squashing to discrete curvature, and we expect the omitted second-order term to matter more as the reduction $1 - \alpha$ grows. Second, structure-only clustering ignores node features. In attributed graphs with skewed classes, such clustering absorbs rare nodes into majority clusters. Rusch et al.~\cite{rusch2023survey} and Chamberlain et al.~\cite{chamberlain2021grand} relate the degradation of representations in deep GNNs to the decay of Dirichlet energy. JST-Coarsen addresses both weaknesses by combining a closed-form second-order resolvent score with a feature-Dirichlet penalty under a hard limit on supernode size.
+SACoD~\cite{sacod2026} extended coarsening to dynamic graphs through a first-order perturbation of the dynamic Laplacian. Two weaknesses follow from that design. First, truncating the eigenvalue shift at the first-order Rayleigh quotient discards the resolvent term $(\mathcal{L} - \lambda_2 I)^\dagger$. Topping et al.~\cite{topping2022understanding} and Di Giovanni et al.~\cite{digiovanni2023oversquashing} tie information bottlenecks and over-squashing to discrete curvature, and we expect the omitted second-order term to matter more as the reduction $1 - \alpha$ grows. Second, structure-only clustering ignores node features. In attributed graphs with skewed classes, such clustering absorbs rare nodes into majority clusters. Rusch et al.~\cite{rusch2023survey} and Chamberlain et al.~\cite{chamberlain2021grand} relate the degradation of representations in deep GNNs to the decay of Dirichlet energy. JST-Coarsen addresses both weaknesses by combining a closed-form second-order resolvent score with a feature-Dirichlet penalty under a hard limit on supernode size.
 
 %==============================================================================
 \section{Problem Formulation and Preliminaries}
 \label{sec:formulation}
 %==============================================================================
-In this section, we formulate the mathematical foundations of discrete dynamic graphs, define the path-coupled supra-Laplacian operator, and establish the dynamic coarsening objective.
+In this section, we formulate the mathematical foundations of discrete dynamic graphs, define the path-coupled dynamic Laplacian operator $\mathcal{L}$, and establish the dynamic coarsening objective.
 
 \subsection{Background and Dynamic Graph Preliminaries}
 Let $\mathcal{G} = \{\mathcal{G}_1, \dots, \mathcal{G}_T\}$ denote a dynamic graph observed across $T$ ordered discrete temporal snapshots. Each snapshot $\mathcal{G}_t = (\mathcal{V}_t, \mathcal{E}_t, X_t)$ contains node set $\mathcal{V}_t$ ($|\mathcal{V}_t| = N_t$), edge set $\mathcal{E}_t$, and dynamic node feature matrix $X_t \in \mathbb{R}^{N_t \times d}$, where $d$ denotes feature dimensionality. The total vertex count across all snapshots is denoted by $N_{\text{tot}} = \sum_{t=1}^T N_t$.
 Structural topology in snapshot $t$ is represented by symmetric adjacency matrix $A_t \in \{0, 1\}^{N_t \times N_t}$ and combinatorial Laplacian $L_t = D_t - A_t$, where $D_t = \operatorname{diag}(\sum_{j} A_{t, ij})$ is the degree matrix, with $\operatorname{deg}_t(u) = D_{t, uu}$. Without loss of generality, we align vertex indices across snapshots such that $N_t = N$ denotes the unified active vertex universe (assigning zero degree to inactive nodes at snapshot $t$), ensuring inter-snapshot operator consistency.
 
-To model intra-snapshot spatial structure and inter-snapshot temporal continuity within one linear algebraic operator, we use the path-coupled supra-Laplacian $\mathcal{L}_{\text{supra}} \in \mathbb{R}^{NT \times NT}$:
+To model intra-snapshot spatial structure and inter-snapshot temporal continuity within one linear algebraic operator, we use the path-coupled dynamic Laplacian $\mathcal{L} \in \mathbb{R}^{NT \times NT}$:
 \begin{equation}
-\label{eq:supra}
+\label{eq:dynamic_laplacian}
 \footnotesize
-\mathcal{L}_{\text{supra}} = 
+\mathcal{L} = 
 \begin{bmatrix}
 L_1 + \omega_1^* I & -\omega_1^* I & \dots & 0 \\
 -\omega_1^* I & L_2 + \Omega_2^* I & \dots & 0 \\
@@ -160,7 +160,7 @@ L_1 + \omega_1^* I & -\omega_1^* I & \dots & 0 \\
 0 & \dots & -\omega_{T-1}^* I & L_T + \omega_{T-1}^* I
 \end{bmatrix}
 \end{equation}
-where $\Omega_t^* = \omega_{t-1}^* + \omega_t^*$, and $\omega_t^* > 0$ is the calibrated coupling coefficient between snapshots $t$ and $t+1$. The algebraic connectivity $\lambda_2(\mathcal{L}_{\text{supra}})$ and its Fiedler eigenvector $\phi_2 \in \mathbb{R}^{NT}$ describe the structural coherence and global diffusion speed of the dynamic network.
+where $\Omega_t^* = \omega_{t-1}^* + \omega_t^*$, and $\omega_t^* > 0$ is the calibrated coupling coefficient between snapshots $t$ and $t+1$. The algebraic connectivity $\lambda_2(\mathcal{L})$ and its Fiedler eigenvector $\phi_2 \in \mathbb{R}^{NT}$ describe the structural coherence and global diffusion speed of the dynamic network.
 
 \subsection{Dynamic Graph Coarsening}
 Dynamic coarsening maps $\mathcal{G}$ to a condensed snapshot sequence $\mathcal{G}' = \{\mathcal{G}'_1, \dots, \mathcal{G}'_T\}$ in which snapshot $t$ has $K_t = \operatorname{round}(\alpha N_t)$ supernodes. The retained ratio $\alpha \in (0, 1)$ is the fraction of nodes kept, so a fraction $1 - \alpha$ is removed. The total number of supernodes across all snapshots is $K_{\text{tot}} = \sum_{t=1}^T K_t$. Snapshot $t$ has a surjective assignment matrix $P_t \in \{0, 1\}^{N_t \times K_t}$ with $P_{t, ij} = 1$ if node $i \in \mathcal{V}_t$ is assigned to supernode $j$, and $P_t \mathbf{1}_{K_t} = \mathbf{1}_{N_t}$. Let $S_k \subseteq \mathcal{V}_t$ denote the set of original nodes merged into supernode $k \in \{1, \dots, K_t\}$.
@@ -176,7 +176,7 @@ X'_t &= (P_t^\top P_t)^{-1} P_t^\top X_t
 Let $\Pi_t = P_{\text{norm}, t} P_{\text{norm}, t}^\top = P_t (P_t^\top P_t)^{-1} P_t^\top \in \mathbb{R}^{N_t \times N_t}$ be the orthogonal projector onto the partition subspace. The Laplacian and features lifted back to the original vertex space are:
 \begin{equation}
 \label{eq:lifted_ops}
-\widetilde{L}_t = P_{\text{norm}, t} L'_t P_{\text{norm}, t}^\top = \Pi_t L_t \Pi_t, \quad \widetilde{X}_t = P_t X'_t = \Pi_t X_t
+L_{\text{lifted}, t} = P_{\text{norm}, t} L'_t P_{\text{norm}, t}^\top = \Pi_t L_t \Pi_t, \quad X_{\text{lifted}, t} = P_t X'_t = \Pi_t X_t
 \end{equation}
 The coarsening operator is chosen to minimise the surrogate reconstruction error:
 \begin{equation}
@@ -189,26 +189,61 @@ subject to $P_t \in \{0, 1\}^{N_t \times K_t}$, $P_t \mathbf{1} = \mathbf{1}$, a
 \section{The JST-Coarsen Framework}
 \label{sec:methodology}
 %==============================================================================
-Below, we present the five modules comprising JST-Coarsen, state our theoretical error bound, and outline the execution pipeline in Algorithm~\ref{alg:jst_coarsen}.
+Below, we present the end-to-end execution pipeline of JST-Coarsen in Algorithm~\ref{alg:jst_coarsen}, followed by an in-depth mathematical treatment of each constituent module ordered strictly by its execution sequence in the algorithm, our dynamic representation error bound (Theorem~\ref{thm:bound}), and the downstream classification and lifting pipeline.
 
-\subsection{Overview}
+\subsection{Overview and Execution Algorithm Pipeline}
 \label{sec:overview}
-Dynamic graph coarsening must overcome three critical bottlenecks that prior methods failed to solve: (1)~\textit{first-order spectral truncation} in SACoD~\cite{sacod2026}, which ignores spectral resolvent curvature and induces non-monotone eigenvalue collapse under large contractions; (2)~\textit{feature-blind topological merging}, which absorbs minority-class nodes into majority clusters on imbalanced attributed graphs, collapsing feature variance and destroying downstream decision boundaries~\cite{chamberlain2021grand,rusch2023survey}; and (3)~\textit{greedy star-graph collapse}, where unconstrained disjoint set union (DSU) on the static union graph allows high-degree hubs to absorb entire neighborhoods, distorting graph diameter.
+Dynamic graph coarsening must overcome three critical bottlenecks that prior methods failed to solve: 
+(1)~\textit{first-order spectral truncation} in SACoD~\cite{sacod2026}, which ignores spectral resolvent curvature and induces non-monotone eigenvalue collapse under large edge contractions; 
+(2)~\textit{feature-blind topological merging}, which absorbs minority-class nodes into majority clusters on imbalanced attributed graphs, collapsing feature variance and destroying downstream decision boundaries~\cite{chamberlain2021grand,rusch2023survey}; and 
+(3)~\textit{greedy star-graph collapse}, where unconstrained disjoint set union (DSU) on the static union graph allows high-degree hubs to greedily absorb entire neighbourhoods, distorting graph diameter and degree distribution.
 
-To solve these problems simultaneously, JST-Coarsen integrates five coordinating modules (Figure~\ref{fig:arch}):
+To solve these problems simultaneously, JST-Coarsen executes five coordinating modules organized into the systematic pipeline formalised in Algorithm~\ref{alg:jst_coarsen} (Figure~\ref{fig:arch}):
 \begin{itemize}
-    \item \textbf{Module 1 (Persistence Backbone):} Builds a time-decayed persistence affinity that filters transient edge churn and retains stable communication pathways (new).
-    \item \textbf{Module 2 (Resolvent Perturbation):} Computes second-order resolvent spectral scores $\Delta \lambda^{(2)}(u, v)$ over 1-hop boundary sums without cubic inversion overhead (new derivation based on Kato~\cite{kato1995perturbation}).
-    \item \textbf{Module 3 (Feature-Dirichlet Regularisation):} Evaluates spatio-temporal Dirichlet energy drift $\delta \mathcal{D}(u, v)$ to preserve feature trajectories and prevent the absorption of minority-class nodes (new).
-    \item \textbf{Module 4 (Gromov--Wasserstein Dynamic Coupling):} Calibrates inter-snapshot coupling weights $\omega_t^*$ via optimal transport discrepancy, decoupling structurally turbulent snapshots (new adaptation of Chowdhury and M{\'e}moli~\cite{chowdhury2019gromov}).
-    \item \textbf{Module 5 (Capacitated Independent Matching):} Selects contractions via capacitated independent edge matching with hierarchical quotient contraction, bounding supernode size to $|S_k| \le 4$ (modified heavy-edge matching).
+    \item \textbf{Module 1 (Persistence Backbone, Step~1):} Constructs a time-decayed persistence affinity that filters transient edge churn and isolates the stable underlying communication backbone across temporal snapshots.
+    \item \textbf{Module 2 (GW Dynamic Coupling, Step~2):} Calibrates inter-snapshot coupling weights $\omega_t^*$ via optimal transport metric alignment, adaptively decoupling structurally turbulent snapshot transitions.
+    \item \textbf{Module 3 (Second-Order Resolvent Perturbation, Step~7):} Evaluates second-order resolvent spectral shifts $\Delta \lambda^{(2)}(u, v)$ over 1-hop boundary sums in $\mathcal{O}(\operatorname{deg})$ time, capturing spectral curvature without cubic matrix inversion.
+    \item \textbf{Module 4 (Spatio-Temporal Dirichlet Regularisation, Step~8):} Evaluates spatio-temporal Dirichlet energy drift $\delta \mathcal{D}(u, v)$ to preserve feature trajectories and strictly protect minority-class decision boundaries.
+    \item \textbf{Composite Edge Affinity \& Veto Formulation (Step~9):} Multiplicatively fuses Modules~1--4 into a conjunctive veto score $W(u, v)$ that penalises violations across any dimension.
+    \item \textbf{Module 5 (Capacitated Matching \& Coarsening Loss Maximization, Step~11):} Solves the coarsening surrogate objective $\max_{\mathcal{M}_t} \sum_{(u, v) \in \mathcal{M}_t} W(u, v)$ subject to degree capacity $\operatorname{deg}_{\mathcal{M}_t}(u) \le 1$ via priority-queue matching (with 2-pass quotient contraction for deep reduction $\alpha < 0.5$), bounding supernode size to $|S_k| \le 4$ and preventing star collapse.
 \end{itemize}
 
-Throughout our framework, we distinguish three operators: (1)~the uncompressed dynamic supra-Laplacian $\mathcal{L}_{\text{supra}} \in \mathbb{R}^{NT \times NT}$ (Eq.~\eqref{eq:supra}); (2)~the condensed supra-Laplacian $\mathcal{L}'_{\text{supra}} \in \mathbb{R}^{K_{\text{tot}} \times K_{\text{tot}}}$ operating on supernodes ($K_{\text{tot}} = \sum_t K_t \ll NT$), which reduces training memory by 70\% and accelerates training up to 4.78$\times$; and (3)~the lifted supra-Laplacian $\widetilde{\mathcal{L}}_{\text{supra}} = \Pi_P \mathcal{L}_{\text{supra}} \Pi_P \in \mathbb{R}^{NT \times NT}$ projected back to the original vertex space via partition projector $\Pi_P = P_{\text{norm}} P_{\text{norm}}^\top$, bounded in Theorem~\ref{thm:bound}.
+\begin{algorithm}[t]
+\caption{JST-Coarsen Dynamic Graph Coarsening Pipeline}
+\label{alg:jst_coarsen}
+\begin{algorithmic}[1]
+\REQUIRE Dynamic graph sequence $\mathcal{G} = \{\mathcal{G}_1, \dots, \mathcal{G}_T\}$, retained ratio $\alpha \in (0, 1)$, hyper-parameters $\beta_{\text{Dir}}, \gamma, \rho, \omega_0, \sigma_\lambda$.
+\ENSURE Condensed dynamic graph sequence $\mathcal{G}' = \{\mathcal{G}'_1, \dots, \mathcal{G}'_T\}$, global normalized lifting operator $P_{\text{norm}}$.
+\STATE \textbf{Module 1 (Persistence Backbone):} Compute time-decayed persistence affinity $A_{\text{persist}}(u, v)$ across all snapshots $t \in \{1, \dots, T\}$ (Eq.~\eqref{eq:persist});
+\STATE \textbf{Module 2 (GW Dynamic Coupling):} Compute Gromov--Wasserstein inter-snapshot coupling weights $\{\omega_t^*\}_{t=1}^{T-1}$ via optimal transport (Eq.~\eqref{eq:omega_star});
+\STATE Assemble global dynamic Laplacian $\mathcal{L} \in \mathbb{R}^{NT \times NT}$ (Eq.~\eqref{eq:dynamic_laplacian}) and compute algebraic connectivity $\lambda_2$ and Fiedler vector $\phi_2 \in \mathbb{R}^{NT}$ once upfront via truncated Lanczos iteration;
+\FOR{each snapshot $t = 1$ to $T$}
+    \STATE Determine supernode target $K_t = \operatorname{round}(\alpha N_t)$ and required contraction budget $R_t = N_t - K_t$;
+    \FOR{each candidate edge $(u, v) \in \mathcal{E}_t$}
+        \STATE \textbf{Module 3 (Resolvent Perturbation):} Compute second-order resolvent spectral shift $\Delta \lambda^{(2)}(u, v)$ via 1-hop boundary summation (Lemma~\ref{lem:resolvent}) and spectral affinity $S_{\text{spectral}}^{(2)}(u, v)$ (Eq.~\eqref{eq:spectral_affinity});
+        \STATE \textbf{Module 4 (Dirichlet Regularisation):} Compute spatio-temporal Dirichlet drift $\delta \mathcal{D}(u, v)$ (Eq.~\eqref{eq:dirichlet_drift});
+        \STATE \textbf{Composite Affinity Calculation:} Evaluate composite affinity $W(u, v) = A_{\text{persist}}(u, v) \cdot S_{\text{spectral}}^{(2)}(u, v) \cdot \exp(-\beta_{\text{Dir}} \delta \mathcal{D}(u, v))$ via conjunctive veto filtering (Eq.~\eqref{eq:composite_affinity});
+    \ENDFOR
+    \STATE \textbf{Module 5 (Coarsening Loss Maximization via Capacitated Matching):} \\
+    Solve the coarsening objective $\max_{\mathcal{M}_t \subseteq \mathcal{E}_t} \sum_{(u, v) \in \mathcal{M}_t} W(u, v)$ subject to $\operatorname{deg}_{\mathcal{M}_t}(u) \le 1$ and $|\mathcal{M}_t| = R_t$ (Eq.~\eqref{eq:matching_opt}) via priority-queue capacitated independent edge matching (executing two hierarchical passes if $\alpha < 0.5$);
+    \STATE Synthesize surjective partition assignment matrix $P_t \in \{0, 1\}^{N_t \times K_t}$ from matching $\mathcal{M}_t$ and singleton supernodes (Eq.~\eqref{eq:partition_synthesis});
+    \STATE Compute condensed topology $A'_t = P_{\text{norm}, t}^\top A_t P_{\text{norm}, t}$ and feature matrix $X'_t = (P_t^\top P_t)^{-1} P_t^\top X_t$;
+\ENDFOR
+\STATE Assemble block-diagonal global lifting operator $P_{\text{norm}} = \operatorname{blkdiag}(P_{\text{norm}, 1}, \dots, P_{\text{norm}, T}) \in \mathbb{R}^{NT \times K_{\text{tot}}}$;
+\STATE \RETURN Condensed graph sequence $\mathcal{G}' = \{\mathcal{G}'_1, \dots, \mathcal{G}'_T\}$ and lifting operator $P_{\text{norm}}$.
+\end{algorithmic}
+\end{algorithm}
+
+Throughout our framework, we distinguish three linear algebraic operators:
+\begin{enumerate}
+    \item The uncompressed dynamic Laplacian $\mathcal{L} \in \mathbb{R}^{NT \times NT}$ (Eq.~\eqref{eq:dynamic_laplacian}), coupling spatial intra-snapshot Laplacians $L_t$ with GW temporal couplings $\omega_t^*$;
+    \item The condensed dynamic Laplacian $\mathcal{L}' \in \mathbb{R}^{K_{\text{tot}} \times K_{\text{tot}}}$ operating over supernodes ($K_{\text{tot}} = \sum_t K_t \ll NT$), which reduces downstream message passing footprint by up to 70\% memory and provides up to 4.78$\times$ training speedup; and
+    \item The lifted dynamic Laplacian $\mathcal{L}_{\text{lifted}} = \Pi_P \mathcal{L} \Pi_P \in \mathbb{R}^{NT \times NT}$ projected back to the original vertex space via partition projector $\Pi_P = P_{\text{norm}} P_{\text{norm}}^\top$, whose operator approximation distance $\|\mathcal{L} - \mathcal{L}_{\text{lifted}}\|_F$ is theoretically bounded in Theorem~\ref{thm:bound}.
+\end{enumerate}
 
 \subsection{Module 1: Time-Decayed Persistence Affinity}
 \label{sec:module1}
-Instead of the unweighted union graph, which accumulates transient edges~\cite{loukas2019graph}, JST-Coarsen scores each candidate edge by how recently and how consistently it appears:
+Instead of the unweighted static union graph, which indiscriminately accumulates transient and noisy edge churn~\cite{loukas2019graph}, JST-Coarsen scores each candidate edge by how recently and how consistently it appears across snapshots:
 \begin{equation}
 \label{eq:persist}
 \begin{split}
@@ -216,23 +251,42 @@ A_{\text{persist}}(u, v) = {}& \left( \frac{1}{Z_\rho} \sum_{t=1}^T e^{-\rho (T 
 & \times \left( \frac{1}{T} \sum_{t=1}^T \mathbf{1}_{\{(u, v) \in \mathcal{E}_t\}} \right)^\mu
 \end{split}
 \end{equation}
-where $\mathcal{E}_t \subseteq \mathcal{V}_t \times \mathcal{V}_t$ is the edge set of snapshot $t \in \{1, \dots, T\}$, $\mathbf{1}_{\{(u, v) \in \mathcal{E}_t\}} \in \{0, 1\}$ is an indicator variable that evaluates to 1 if candidate edge $(u, v)$ exists at time $t$ and 0 otherwise, $\rho \ge 0$ sets the temporal recency decay rate (prioritizing edges in recent snapshots $t \approx T$), $\mu \ge 1$ (default $\mu = 1.0$) penalises intermittent sporadic connections, and normalisation constant $Z_\rho = \sum_{t=1}^T e^{-\rho (T - t)} = \frac{1 - e^{-\rho T}}{1 - e^{-\rho}}$ guarantees the first factor lies in $[0, 1]$. Consequently, $A_{\text{persist}}(u, v) \in [0, 1]$ isolates edges belonging to the stable communication structure.
+where $\mathcal{E}_t \subseteq \mathcal{V}_t \times \mathcal{V}_t$ is the edge set of snapshot $t \in \{1, \dots, T\}$, $\mathbf{1}_{\{(u, v) \in \mathcal{E}_t\}} \in \{0, 1\}$ is an indicator variable evaluating to 1 if candidate edge $(u, v)$ exists at time $t$ and 0 otherwise, $\rho \ge 0$ sets the temporal recency decay rate (prioritizing edges in recent snapshots $t \approx T$), $\mu \ge 1$ (default $\mu = 1.0$) penalises intermittent sporadic connections, and normalisation constant $Z_\rho = \sum_{t=1}^T e^{-\rho (T - t)} = \frac{1 - e^{-\rho T}}{1 - e^{-\rho}}$ guarantees the first factor lies in $[0, 1]$. Consequently, $A_{\text{persist}}(u, v) \in [0, 1]$ isolates edges belonging to the stable communication backbone of the network.
 
-\subsection{Module 2: Second-Order Resolvent Perturbation}
+\subsection{Module 2: Gromov--Wasserstein Adaptive Coupling}
 \label{sec:module2}
-When nodes $u$ and $v$ are contracted in snapshot $t$, the supra-Laplacian changes in the ambient vertex space by perturbation matrix $\Delta \mathcal{L} = \widetilde{\mathcal{L}}_{\text{supra}} - \mathcal{L}_{\text{supra}} \in \mathbb{R}^{NT \times NT}$. For a single edge contraction $(u, v)$, $\Delta \mathcal{L}$ is supported on the corresponding snapshot block as $-e_{uv} e_{uv}^\top$, where $e_{uv} = e_u - e_v \in \mathbb{R}^N$ is the standard edge difference vector satisfying $e_{uv}(u) = 1, e_{uv}(v) = -1$, and $e_{uv}(w) = 0$ for $w \notin \{u, v\}$. Earlier dynamic coarsening methods (e.g., SACoD~\cite{sacod2026}) keep only the first-order Rayleigh-quotient term of the eigenvalue shift. Standard matrix perturbation theory (Kato~\cite{kato1995perturbation}; Cauchy contour integration) gives the expansion up to second order with a third-order remainder:
+On non-stationary dynamic graphs, the rate of structural evolution varies considerably across snapshot intervals. Rather than adopting an arbitrary, constant inter-slice coupling $\omega_t$~\cite{pareja2020evolvegcn,sacod2026}, we calibrate the temporal continuity weights $\omega_t^*$ from the Gromov--Wasserstein optimal transport discrepancy between the shortest-path metric spaces $\Psi_t$ and $\Psi_{t+1}$~\cite{chowdhury2019gromov}:
+\begin{equation}
+\label{eq:gw_full}
+\begin{split}
+\mathcal{D}_{\text{GW}}(\mathcal{G}_t, \mathcal{G}_{t+1}) = {}& \min_{\Gamma \in \Pi(p, q)} \sum_{i, k \in \mathcal{V}_t} \sum_{j, l \in \mathcal{V}_{t+1}} \\
+& \left| \Psi_t(i, k) - \Psi_{t+1}(j, l) \right|^2 \Gamma_{ij} \Gamma_{kl}
+\end{split}
+\end{equation}
+Here $\Psi_t(i, k)$ denotes the shortest-path geodesic distance between nodes $i$ and $k$ in snapshot $t$, and $\Pi(p, q) = \{ \Gamma \in \mathbb{R}_+^{N_t \times N_{t+1}} : \Gamma \mathbf{1} = p, \, \Gamma^\top \mathbf{1} = q \}$ is the transportation polytope with uniform probability marginals $p = \frac{1}{N_t}\mathbf{1}_{N_t}$ and $q = \frac{1}{N_{t+1}}\mathbf{1}_{N_{t+1}}$. The adaptive coupling coefficient is defined as:
+\begin{equation}
+\label{eq:omega_star}
+\omega_t^* = \omega_0 \cdot \exp\left( - \frac{\mathcal{D}_{\text{GW}}(\mathcal{G}_t, \mathcal{G}_{t+1})}{\sigma^2} \right)
+\end{equation}
+where $\omega_0 > 0$ is the base coupling strength (set to $\omega_0 = 1.0$), and $\sigma > 0$ is the bandwidth parameter chosen via the median heuristic over structural differences. When severe topological shifts occur between consecutive snapshots, $\omega_t^*$ decreases automatically, decoupling mismatched slices and preventing spurious gradient contamination across temporal discontinuities.
+
+\subsection{Module 3: Second-Order Resolvent Perturbation}
+\label{sec:module3}
+When nodes $u$ and $v$ are contracted in snapshot $t$, the dynamic Laplacian $\mathcal{L}$ changes in the ambient vertex space by perturbation matrix $\Delta \mathcal{L} = \mathcal{L}_{\text{lifted}} - \mathcal{L} \in \mathbb{R}^{NT \times NT}$. For a single edge contraction $(u, v)$, $\Delta \mathcal{L}$ is supported on the corresponding snapshot block as $-e_{uv} e_{uv}^\top$, where $e_{uv} = e_u - e_v \in \mathbb{R}^N$ is the standard edge difference vector satisfying $e_{uv}(u) = 1, e_{uv}(v) = -1$, and $e_{uv}(w) = 0$ for $w \notin \{u, v\}$. 
+
+Earlier dynamic coarsening heuristics (e.g., SACoD~\cite{sacod2026}) keep only the first-order Rayleigh-quotient term of the eigenvalue shift. Standard matrix perturbation theory (Kato~\cite{kato1995perturbation}; Cauchy contour integration) gives the complete expansion up to second order with a third-order remainder:
 \begin{equation}
 \label{eq:second_order_full}
 \begin{split}
 \Delta \lambda_m = {}& \phi_m^\top \Delta \mathcal{L} \phi_m \\
-& - \phi_m^\top \Delta \mathcal{L} \left(\mathcal{L}_{\text{supra}} - \lambda_m I\right)^\dagger \Delta \mathcal{L} \phi_m + \mathcal{O}\left(\|\Delta \mathcal{L}\|_F^3\right)
+& - \phi_m^\top \Delta \mathcal{L} \left(\mathcal{L} - \lambda_m I\right)^\dagger \Delta \mathcal{L} \phi_m + \mathcal{O}\left(\|\Delta \mathcal{L}\|_F^3\right)
 \end{split}
 \end{equation}
-where $\phi_m \in \mathbb{R}^{NT}$ and $\lambda_m \ge 0$ denote the $m$-th eigenvector and eigenvalue of $\mathcal{L}_{\text{supra}}$, $(\cdot)^\dagger$ denotes the Moore--Penrose pseudoinverse, and $\|\cdot\|_F$ is the Frobenius norm.
+where $\phi_m \in \mathbb{R}^{NT}$ and $\lambda_m \ge 0$ denote the $m$-th eigenvector and eigenvalue of $\mathcal{L}$, $(\cdot)^\dagger$ denotes the Moore--Penrose pseudoinverse, and $\|\cdot\|_F$ is the Frobenius norm.
 
 \begin{lemma}[Local 1-Hop Boundary Identity]
 \label{lem:resolvent}
-Let $\phi_2 \in \mathbb{R}^{NT}$ denote the Fiedler eigenvector of $\mathcal{L}_{\text{supra}}$ for algebraic connectivity $\lambda_2$. For candidate edge $(u, v) \in \mathcal{E}_t$, let $\mathcal{N}(u) = \{w \in \mathcal{V}_t : A_{t, uw} > 0\}$ denote the open 1-hop neighborhood of node $u$, and let $\partial(u, v) = (\mathcal{N}(u) \cup \mathcal{N}(v)) \setminus \{u, v\}$ be its boundary neighbourhood. The second-order resolvent spectral shift decomposes as:
+Let $\phi_2 \in \mathbb{R}^{NT}$ denote the Fiedler eigenvector of dynamic Laplacian $\mathcal{L}$ corresponding to algebraic connectivity $\lambda_2$. For candidate edge $(u, v) \in \mathcal{E}_t$, let $\mathcal{N}(u) = \{w \in \mathcal{V}_t : A_{t, uw} > 0\}$ denote the open 1-hop neighborhood of node $u$, and let $\partial(u, v) = (\mathcal{N}(u) \cup \mathcal{N}(v)) \setminus \{u, v\}$ be its boundary neighbourhood. The second-order resolvent spectral shift decomposes as:
 \begin{equation}
 \label{eq:resolvent_identity}
 \begin{split}
@@ -240,17 +294,17 @@ Let $\phi_2 \in \mathbb{R}^{NT}$ denote the Fiedler eigenvector of $\mathcal{L}_
 & - \frac{1}{\lambda_3 - \lambda_2} \sum_{w \in \partial(u, v)} \left(\phi_2(u) - \phi_2(w)\right)^2
 \end{split}
 \end{equation}
-where $\lambda_3 - \lambda_2 > 0$ is the spectral gap between the second and third eigenvalues of $\mathcal{L}_{\text{supra}}$.
+where $\lambda_3 - \lambda_2 > 0$ is the spectral gap between the second and third eigenvalues of $\mathcal{L}$.
 \end{lemma}
-Lemma~\ref{lem:resolvent} allows the second-order term to be evaluated in $\mathcal{O}(|\mathcal{N}(u) \cup \mathcal{N}(v)|)$ operations per candidate edge, adding no asymptotic cost to the first-order score. To favour pairs whose contraction disturbs the spectrum least, we define the spectral affinity:
+Lemma~\ref{lem:resolvent} allows the second-order term to be evaluated in $\mathcal{O}(|\mathcal{N}(u) \cup \mathcal{N}(v)|)$ operations per candidate edge, adding no asymptotic cost to the first-order score. To favour pairs whose contraction disturbs the dynamic spectrum least, we define the spectral affinity:
 \begin{equation}
 \label{eq:spectral_affinity}
 S_{\text{spectral}}^{(2)}(u, v) = \exp\left( - \frac{\Delta \lambda^{(2)}(u, v)}{\sigma_\lambda^2} \right)
 \end{equation}
 where $\sigma_\lambda^2 > 0$ is a spectral temperature parameter (default $\sigma_\lambda = 1.0$) scaling the eigenvalue perturbation.
 
-\subsection{Module 3: Spatio-Temporal Dirichlet Regularisation}
-\label{sec:module3}
+\subsection{Module 4: Spatio-Temporal Dirichlet Regularisation}
+\label{sec:module4}
 The Dirichlet energy of node features on snapshot $t$ is $\mathcal{D}_{\text{Dir}}(X_t) = \frac{1}{2} \operatorname{Tr}(X_t^\top L_t X_t) = \frac{1}{2}\sum_{(i, j) \in \mathcal{E}_t} \|x_i^{(t)} - x_j^{(t)}\|_2^2$, where $X_t \in \mathbb{R}^{N_t \times d}$ is the feature matrix, $x_i^{(t)} \in \mathbb{R}^d$ is the feature vector of node $i$, and $L_t = D_t - A_t$ is the combinatorial Laplacian~\cite{chamberlain2021grand,rusch2023survey}. To protect feature trajectories during contraction, we define the local spat-temporal Dirichlet energy drift:
 \begin{equation}
 \label{eq:dirichlet_drift}
@@ -261,9 +315,9 @@ The Dirichlet energy of node features on snapshot $t$ is $\mathcal{D}_{\text{Dir
 \end{equation}
 where $\operatorname{deg}_t(u)$ is the degree of node $u$ at snapshot $t$, $\mathcal{T}(t) = \{t - 1, t + 1\} \cap \{1, \dots, T\}$ denotes the temporal adjacent snapshot set, $\delta x_u^{(t, \tau)} = x_u^{(t)} - x_u^{(\tau)} \in \mathbb{R}^d$ is the temporal feature change of node $u$ between snapshots $t$ and $\tau$, and $\gamma > 0$ (default $\gamma = 0.25$) weights the preservation of temporal feature velocity.
 
-\subsection{Composite Affinity}
+\subsection{Composite Edge Affinity and Multi-Criteria Veto Formulation}
 \label{sec:fusion}
-To balance temporal topological persistence, spectral geometric fidelity, and semantic feature smoothness simultaneously, JST-Coarsen unifies the criteria from Modules 1--3 into a composite edge affinity $W(u, v) \in [0, 1]$:
+To balance temporal topological persistence, spectral geometric fidelity, and semantic feature smoothness simultaneously, JST-Coarsen unifies the criteria from Modules~1--4 into a composite edge affinity $W(u, v) \in [0, 1]$:
 \begin{equation}
 \label{eq:composite_affinity}
 W(u, v) = A_{\text{persist}}(u, v) \cdot S_{\text{spectral}}^{(2)}(u, v) \cdot \exp\left(-\beta_{\text{Dir}} \, \delta \mathcal{D}(u, v)\right)
@@ -272,83 +326,106 @@ where $\beta_{\text{Dir}} > 0$ governs the penalty severity for semantic feature
 
 The multiplicative formulation of $W(u, v)$ is mathematically essential: it functions as a conjunctive multi-criteria ``veto'' filter. If a candidate edge fails any single criterion---for instance, if it represents a transient interaction artifact ($A_{\text{persist}} \approx 0$), if contracting it incurs severe second-order spectral perturbation ($S_{\text{spectral}}^{(2)} \approx 0$), or if it bridges nodes with divergent feature trajectories across class boundaries ($\exp(-\beta_{\text{Dir}} \delta \mathcal{D}) \approx 0$)---its composite weight $W(u, v)$ drops sharply towards zero. This prevents destructive ``false positive'' merges where an edge exhibits high temporal frequency but would degrade minority-class feature distributions or graph spectral connectivity if contracted.
 
-Downstream, composite affinity $W(u, v)$ fulfills two concrete operational roles in Module~\ref{sec:module5}:
+Downstream, composite affinity $W(u, v)$ fulfills two concrete operational roles in Module~5:
 \begin{enumerate}
     \item \textbf{Matching Objective Weight:} $W(u, v)$ constitutes the exact linear objective coefficient in the capacitated independent edge matching formulation (Eq.~\eqref{eq:matching_opt}), ensuring that the selected contraction set $\mathcal{M}_t$ maximizes aggregate multi-criteria fidelity across the snapshot.
     \item \textbf{Priority Queue Ordering:} In greedy matching execution (Algorithm~\ref{alg:jst_coarsen}), candidate edges in snapshot $\mathcal{G}_t$ are inserted into a max-priority queue keyed by $W(u, v)$. Module~5 iteratively extracts the edge with the highest composite affinity to contract first, guaranteeing that only the safest, most temporally stable, and feature-coherent node pairs are condensed.
 \end{enumerate}
 
-\subsection{Module 4: Gromov--Wasserstein Adaptive Coupling}
-\label{sec:module4}
-On non-stationary dynamic graphs, the rate of structural change varies across snapshot intervals. Rather than adopting a constant inter-slice coupling $\omega_t$~\cite{pareja2020evolvegcn,sacod2026}, we calibrate $\omega_t^*$ from the Gromov--Wasserstein discrepancy between the shortest-path metric spaces $\Psi_t$ and $\Psi_{t+1}$~\cite{chowdhury2019gromov}:
-\begin{equation}
-\label{eq:gw_full}
-\begin{split}
-\mathcal{D}_{\text{GW}}(\mathcal{G}_t, \mathcal{G}_{t+1}) = {}& \min_{\Gamma \in \Pi(p, q)} \sum_{i, k \in \mathcal{V}_t} \sum_{j, l \in \mathcal{V}_{t+1}} \\
-& \left| \Psi_t(i, k) - \Psi_{t+1}(j, l) \right|^2 \Gamma_{ij} \Gamma_{kl}
-\end{split}
-\end{equation}
-Here $\Psi_t(i, k)$ denotes the shortest-path geodesic distance between nodes $i$ and $k$ in snapshot $t$, and $\Pi(p, q) = \{ \Gamma \in \mathbb{R}_+^{N_t \times N_{t+1}} : \Gamma \mathbf{1} = p, \, \Gamma^\top \mathbf{1} = q \}$ is the transportation polytope with uniform probability marginals $p = \frac{1}{N_t}\mathbf{1}_{N_t}$ and $q = \frac{1}{N_{t+1}}\mathbf{1}_{N_{t+1}}$. The adaptive coupling coefficient is:
-\begin{equation}
-\label{eq:omega_star}
-\omega_t^* = \omega_0 \cdot \exp\left( - \frac{\mathcal{D}_{\text{GW}}(\mathcal{G}_t, \mathcal{G}_{t+1})}{\sigma^2} \right)
-\end{equation}
-where $\omega_0 > 0$ is the base coupling strength (set to $\omega_0 = 1.0$), and $\sigma > 0$ is the bandwidth parameter chosen via the median heuristic over structural differences. When topological shifts occur between consecutive snapshots, $\omega_t^*$ decreases, decoupling mismatched slices and preserving intra-snapshot fidelity.
-
-\subsection{Module 5: Capacitated Independent Edge Matching}
+\subsection{Module 5: Capacitated Independent Edge Matching and Coarsening Loss Maximization}
 \label{sec:module5}
-Recall that the dynamic graph coarsening objective (Eq.~\eqref{eq:objective}) seeks to \textit{minimise} the global surrogate reconstruction error $\min_P \sum_{t=1}^T (\| L_t - \Pi_t L_t \Pi_t \|_F^2 + \beta_X \| X_t - \Pi_t X_t \|_F^2)$. Directly solving this binary matrix factorization is NP-hard. In JST-Coarsen, we relax this combinatorial problem by observing that composite affinity $W(u, v)$ in Eq.~\eqref{eq:composite_affinity} penalises spectral eigenvalue distortion and Dirichlet feature drift exponentially. Therefore, minimising structural and feature loss is equivalent to \textit{maximising} aggregate composite edge affinity across selected contractions. To prevent star-graph supernode collapse, contractions are chosen as a maximum-weight capacitated matching in which every node participates in at most one merge per pass:
+In this subsection, we formalise how JST-Coarsen maximizes the coarsening objective, solves the combinatorial optimization in Eq.~\eqref{eq:matching_opt}, and derives the surjective partition matrix $P_t$.
+
+\subsubsection{Theoretical Objective Equivalence: Minimizing Reconstruction Loss via Affinity Maximization}
+Recall that the dynamic graph coarsening objective in Eq.~\eqref{eq:objective} seeks to minimize the surrogate reconstruction error:
+\begin{equation*}
+\min_{P} \quad \sum_{t=1}^T \left( \left\| L_t - \Pi_t L_t \Pi_t \right\|_F^2 + \beta_X \left\| X_t - \Pi_t X_t \right\|_F^2 \right)
+\end{equation*}
+Directly optimizing over binary assignment matrices $P_t \in \{0, 1\}^{N_t \times K_t}$ is NP-hard. We resolve this by establishing an explicit link between the surrogate loss and the composite edge affinity $W(u, v)$ (Eq.~\eqref{eq:composite_affinity}). 
+
+Under an edge contraction $(u, v) \in \mathcal{E}_t$, the structural perturbation in the graph Laplacian is governed by the second-order eigenvalue shift $\Delta \lambda^{(2)}(u, v)$ (Lemma~\ref{lem:resolvent}), which upper-bounds the operator norm perturbation $\|L_t - \Pi_t L_t \Pi_t\|_F^2$ according to Kato's perturbation expansion~\cite{kato1995perturbation}. Concurrently, the feature projection error $\|X_t - \Pi_t X_t\|_F^2$ is bounded by the local Dirichlet energy drift $\delta \mathcal{D}(u, v)$ (Eq.~\eqref{eq:dirichlet_drift} and Theorem~\ref{thm:bound}).
+
+Taking the negative natural logarithm of the composite edge affinity $W(u, v)$ yields an exact additive decomposition of penalized distortion terms:
+\begin{equation}
+\label{eq:neg_log_affinity}
+-\log W(u, v) = -\log A_{\text{persist}}(u, v) + \frac{1}{\sigma_\lambda^2} \Delta \lambda^{(2)}(u, v) + \beta_{\text{Dir}} \, \delta \mathcal{D}(u, v)
+\end{equation}
+Notice that the right-hand side of Eq.~\eqref{eq:neg_log_affinity} is a strictly non-negative composite penalty:
+(1)~$-\log A_{\text{persist}}(u, v) \ge 0$ penalizes temporal edge intermittency and filters ephemeral churn;
+(2)~$\frac{1}{\sigma_\lambda^2} \Delta \lambda^{(2)}(u, v) \ge 0$ penalizes spectral curvature distortion and preserves algebraic connectivity $\lambda_2$; and
+(3)~$\beta_{\text{Dir}} \delta \mathcal{D}(u, v) \ge 0$ penalizes semantic feature variation and protects minority-class decision boundaries.
+
+Consequently, minimizing the cumulative surrogate reconstruction loss over an independent edge contraction set $\mathcal{M}_t \subseteq \mathcal{E}_t$:
+\begin{equation}
+\label{eq:loss_equiv}
+\min_{\mathcal{M}_t \subseteq \mathcal{E}_t} \sum_{(u, v) \in \mathcal{M}_t} \left[ -\log W(u, v) \right] \iff \max_{\mathcal{M}_t \subseteq \mathcal{E}_t} \prod_{(u, v) \in \mathcal{M}_t} W(u, v)
+\end{equation}
+Under the first-order linear surrogate approximation $\log(1 + x) \approx x$ (or equivalently treating $W(u, v)$ as the linear matching utility), maximizing the aggregate product is strictly monotonic with maximizing the linear sum of composite affinities. This establishes our coarsening objective maximization problem:
 \begin{equation}
 \label{eq:matching_opt}
 \begin{aligned}
-\max_{\mathcal{M}_t \subseteq \mathcal{E}_t} & \sum_{(u, v) \in \mathcal{M}_t} W(u, v) \\
+\max_{\mathcal{M}_t \subseteq \mathcal{E}_t} & \quad \sum_{(u, v) \in \mathcal{M}_t} W(u, v) \\
 \text{subject to} & \quad \operatorname{deg}_{\mathcal{M}_t}(u) \le 1, \quad \forall u \in \mathcal{V}_t, \\
 & \quad |\mathcal{M}_t| = R_t = N_t - K_t
 \end{aligned}
 \end{equation}
-where $\operatorname{deg}_{\mathcal{M}_t}(u) = \sum_{v : (u, v) \in \mathcal{M}_t} 1 \le 1$ ensures independent pairwise contractions, $K_t = \operatorname{round}(\alpha N_t)$ is the target supernode budget for retained ratio $\alpha \in (0, 1)$, and $R_t = N_t - K_t$ is the exact number of edge contractions required.
+where $K_t = \operatorname{round}(\alpha N_t)$ is the supernode target for retained ratio $\alpha \in (0, 1)$, and $R_t = N_t - K_t$ is the exact number of edge contractions required.
 
-\paragraph{Construction of Partition Matrix $P_t$ from Matching $\mathcal{M}_t$}
-Once the optimal edge set $\mathcal{M}_t = \{(u_1, v_1), \dots, (u_{R_t}, v_{R_t})\}$ is selected, the surjective assignment matrix $P_t \in \{0, 1\}^{N_t \times K_t}$ is synthesized directly:
+\subsubsection{Degree Capacity Constraint and Prevention of Star Collapse}
+The linear constraint $\operatorname{deg}_{\mathcal{M}_t}(u) = \sum_{v : (u, v) \in \mathcal{M}_t} 1 \le 1$ for all $u \in \mathcal{V}_t$ in Eq.~\eqref{eq:matching_opt} enforces that each original vertex participates in at most one edge contraction within matching $\mathcal{M}_t$. 
+
+This capacity restriction is essential to the stability of dynamic graph coarsening. In unconstrained clustering and greedy Disjoint Set Union (DSU) heuristics~\cite{sacod2026}, high-degree hub nodes act as structural attractors, greedily merging with all adjacent neighbors. On dynamic scale-free graphs, this induces catastrophic \textit{star-graph collapse}, producing giant supernodes with hundreds of members (e.g., maximum supernode degree expanding to $\operatorname{deg}_{\max} = 348$ on DBLP5). This collapses the communication diameter of the graph, distorts local degree distributions, and degrades downstream spatial convolution. By enforcing $\operatorname{deg}_{\mathcal{M}_t}(u) \le 1$, JST-Coarsen strictly guarantees that each contraction forms an isolated pair, bounding supernode size to $|S_k| \le 2$ in a single pass and keeping maximum degree bounded at $\operatorname{deg}_{\max} = 22$, matching the uncompressed topology.
+
+\subsubsection{Algorithmic Solver: Max-Priority Queue Greedy Matching}
+Finding the exact optimum of maximum-weight matching on general graphs via Edmonds' Blossom algorithm requires $\mathcal{O}(|\mathcal{V}|^3)$ operations, which is prohibitively expensive on dynamic sequences unrolled across $T$ snapshots. JST-Coarsen solves Eq.~\eqref{eq:matching_opt} using a greedy max-priority queue matching algorithm that delivers a provable $\frac{1}{2}$-approximation of the global optimum in worst-case time $\mathcal{O}(|\mathcal{E}_t| \log |\mathcal{E}_t|)$ and linear space $\mathcal{O}(|\mathcal{E}_t| + N_t)$:
 \begin{enumerate}
-    \item Each contracted edge $(u_k, v_k) \in \mathcal{M}_t$ ($1 \le k \le R_t$) forms a two-vertex supernode cluster $S_k = \{u_k, v_k\}$.
-    \item The remaining $N_t - 2R_t$ nodes that were not matched in $\mathcal{M}_t$ remain as individual singleton supernodes $S_{R_t + j} = \{w_j\}$ for $1 \le j \le N_t - 2R_t$.
+    \item \textbf{Heap Initialization:} For each candidate edge $(u, v) \in \mathcal{E}_t$, compute composite affinity $W(u, v) \in [0, 1]$ via Eq.~\eqref{eq:composite_affinity}. Insert all edges into a max-binary heap $\mathcal{Q}_t$ keyed by $W(u, v)$. Allocate a boolean capacity lookup array $\operatorname{matched}[u] \leftarrow \text{False}$ for all $u \in \mathcal{V}_t$, and initialize matching set $\mathcal{M}_t \leftarrow \emptyset$.
+    \item \textbf{Greedy Extraction and Capacity Verification:} While $|\mathcal{M}_t| < R_t$ and $\mathcal{Q}_t \neq \emptyset$:
+    \begin{itemize}
+        \item Extract the candidate edge with largest composite affinity: $(u^*, v^*) = \operatorname{argmax}_{(u, v) \in \mathcal{Q}_t} W(u, v)$.
+        \item Verify degree capacity: check if $\operatorname{matched}[u^*] == \text{False}$ and $\operatorname{matched}[v^*] == \text{False}$.
+        \item If both nodes are unmerged, accept $(u^*, v^*)$ into matching $\mathcal{M}_t$, set $\operatorname{matched}[u^*] \leftarrow \text{True}$ and $\operatorname{matched}[v^*] \leftarrow \text{True}$, and decrement remaining contraction budget $R_t \leftarrow R_t - 1$.
+        \item If either node is already matched, discard $(u^*, v^*)$, as contracting it would violate $\operatorname{deg}_{\mathcal{M}_t} \le 1$ and trigger star collapse.
+    \end{itemize}
+    \item \textbf{Degree Saturation Safeguard:} If $\mathcal{Q}_t$ is exhausted before reaching budget $R_t$ (which occurs only if all incident edges of remaining vertices violate capacity), remaining unmatched nodes are maintained as singletons, guaranteeing complete algorithmic stability without forcing destructive cross-component merges.
 \end{enumerate}
-This yields exactly $R_t + (N_t - 2R_t) = N_t - R_t = K_t$ supernode clusters. The partition assignment matrix $P_t$ is defined entrywise as $P_{t, ik} = 1$ if node $i \in S_k$ and $0$ otherwise. Because the clusters $\{S_k\}_{k=1}^{K_t}$ form a complete and disjoint partition of $\mathcal{V}_t$, $P_t$ strictly satisfies the partition constraint $P_t \mathbf{1}_{K_t} = \mathbf{1}_{N_t}$ required by Eq.~\eqref{eq:objective}.
 
-\begin{algorithm}[t]
-\caption{JST-Coarsen Dynamic Graph Coarsening}
-\label{alg:jst_coarsen}
-\begin{algorithmic}[1]
-\REQUIRE Dynamic graph $\mathcal{G} = \{\mathcal{G}_1, \dots, \mathcal{G}_T\}$, ratio $\alpha$, parameters $\beta_{\text{Dir}}, \gamma, \rho, \omega_0$.
-\ENSURE Condensed dynamic graph $\mathcal{G}' = \{\mathcal{G}'_1, \dots, \mathcal{G}'_T\}$, lifting operator $P_{\text{norm}}$.
-\STATE Compute persistence affinity $A_{\text{persist}}$ over $T$ snapshots (Eq.~\eqref{eq:persist}).
-\STATE Compute Gromov--Wasserstein coupling weights $\{\omega_t^*\}_{t=1}^{T-1}$ (Eq.~\eqref{eq:omega_star}).
-\STATE Assemble $\mathcal{L}_{\text{supra}}$ (Eq.~\eqref{eq:supra}) and compute Fiedler vector $\phi_2$ once upfront.
-\FOR{each snapshot $t = 1$ to $T$}
-    \STATE Set $K_t = \operatorname{round}(\alpha N_t)$ and $R_t = N_t - K_t$;
-    \FOR{each candidate edge $(u, v) \in \mathcal{E}_t$}
-        \STATE Compute $\Delta \lambda^{(2)}(u, v)$ (Lemma~\ref{lem:resolvent}), $\delta \mathcal{D}(u, v)$ (Eq.~\eqref{eq:dirichlet_drift}) and $W(u, v)$ (Eq.~\eqref{eq:composite_affinity});
-    \ENDFOR
-    \STATE Select top-$R_t$ non-adjacent edges $\mathcal{M}_t$ by independent edge matching (two passes if $\alpha < 0.5$);
-    \STATE Build $P_t \in \{0, 1\}^{N_t \times K_t}$ from $\mathcal{M}_t$;
-    \STATE Compute $A'_t = P_{\text{norm}, t}^\top A_t P_{\text{norm}, t}$ and $X'_t = (P_t^\top P_t)^{-1} P_t^\top X_t$.
-\ENDFOR
-\STATE Assemble $P_{\text{norm}} = \operatorname{blkdiag}(P_{\text{norm}, 1}, \dots, P_{\text{norm}, T})$ and return $\mathcal{G}'$ and $P_{\text{norm}}$.
-\end{algorithmic}
-\end{algorithm}
+\subsubsection{Hierarchical Two-Pass Quotient Graph Contraction for Deep Reductions ($\alpha < 0.5$)}
+When retained ratio $\alpha \ge 0.5$, the required contraction budget $R_t = N_t - \operatorname{round}(\alpha N_t) \le N_t / 2$ is easily satisfied in a single matching pass since an independent matching can contain up to $\lfloor N_t / 2 \rfloor$ disjoint edges, guaranteeing $|S_k| \le 2$.
 
-For moderate reduction ($\alpha \ge 0.5$), a single pass gives supernodes with $|S_k| \le 2$. For deeper reduction ($\alpha < 0.5$, e.g., $\alpha \in \{0.3, 0.4\}$), matching is executed in two passes on quotient graphs: Pass 1 contracts $\mathcal{G}_t$ to an intermediate graph $\mathcal{G}_t^{(1)}$ at ratio $\alpha_1 = \sqrt{\alpha}$ with $|S_k^{(1)}| \le 2$, and Pass 2 contracts $\mathcal{G}_t^{(1)}$ to the final graph $\mathcal{G}_t^{(2)}$ at ratio $\alpha_2 = \sqrt{\alpha}$ with $|S_k^{(2)}| \le 2$. Over both passes, $|S_k| \le 4$, which bounds supernode size for all $\alpha \ge 0.25$. The matching is solved greedily using a priority queue over $W(u, v)$ with degree capacity checking; if candidate edges are exhausted, unmatched nodes remain as singletons.
+However, under deep compression ($\alpha < 0.5$, e.g., $\alpha = 0.4$ requiring 60\% reduction or $\alpha = 0.3$ requiring 70\% reduction), a single pass of independent matching cannot achieve the budget because $R_t > N_t / 2$. Rather than relaxing the capacity constraint and permitting star collapse, JST-Coarsen solves the optimization hierarchically across two sequential quotient graph matching passes:
+\begin{enumerate}
+    \item \textbf{Pass 1 (Intermediate Quotient Coarsening):} Set intermediate target ratio $\alpha_1 = \sqrt{\alpha} \in [0.5, 0.71]$. Solve Eq.~\eqref{eq:matching_opt} on original snapshot $\mathcal{G}_t$ to contract $R_t^{(1)} = N_t - \operatorname{round}(\alpha_1 N_t)$ edges. This yields intermediate quotient graph $\mathcal{G}_t^{(1)}$ having $K_t^{(1)} = N_t - R_t^{(1)}$ supernodes, each satisfying cardinality $|S_k^{(1)}| \le 2$.
+    \item \textbf{Pass 2 (Quotient-to-Final Coarsening):} Construct quotient edges between adjacent supernodes in $\mathcal{G}_t^{(1)}$ and re-evaluate quotient composite affinities $W^{(1)}(S_i, S_j)$. Solve Eq.~\eqref{eq:matching_opt} on intermediate quotient graph $\mathcal{G}_t^{(1)}$ at ratio $\alpha_2 = \sqrt{\alpha}$ (satisfying $\alpha_1 \cdot \alpha_2 = \sqrt{\alpha} \cdot \sqrt{\alpha} = \alpha$) to contract $R_t^{(2)} = K_t^{(1)} - K_t$ quotient edges.
+\end{enumerate}
+Because each quotient pass strictly enforces $\operatorname{deg}_{\mathcal{M}} \le 1$, each supernode in Pass 2 merges at most two supernodes from Pass 1. Consequently, the final supernode cluster size is strictly bounded by:
+\begin{equation}
+\label{eq:supernode_cardinality_bound}
+|S_k| \le 2 \times 2 = 4, \quad \forall k \in \{1, \dots, K_t\}
+\end{equation}
+This establishes a universal supernode cardinality guarantee $|S_k| \le 4$ across all retained ratios $\alpha \ge 0.25$, completely eliminating star collapse while enabling deep node compression.
+
+\subsubsection{Surjective Partition Matrix Synthesis}
+\label{sec:partition_synthesis}
+Once matching set $\mathcal{M}_t = \{(u_1, v_1), \dots, (u_{R_t}, v_{R_t})\}$ is finalized, the surjective assignment matrix $P_t \in \{0, 1\}^{N_t \times K_t}$ is synthesized directly:
+\begin{equation}
+\label{eq:partition_synthesis}
+P_{t, ik} = \begin{cases}
+1, & \text{if node } i \in S_k, \\
+0, & \text{otherwise}
+\end{cases}
+\end{equation}
+where $S_k = \{u_k, v_k\}$ for matched edges $1 \le k \le R_t$, and $S_{R_t + j} = \{w_j\}$ for unmatched singleton nodes $1 \le j \le N_t - 2R_t$. The total number of clusters is $R_t + (N_t - 2R_t) = N_t - R_t = K_t$. Because $\{S_k\}_{k=1}^{K_t}$ forms a complete and disjoint partition of $\mathcal{V}_t$, $P_t$ strictly satisfies the partition constraint $P_t \mathbf{1}_{K_t} = \mathbf{1}_{N_t}$ required by Eq.~\eqref{eq:objective}, enabling the exact orthogonal projection $\Pi_t = P_t (P_t^\top P_t)^{-1} P_t^\top$ and feature condensation $X'_t = (P_t^\top P_t)^{-1} P_t^\top X_t$.
 
 \subsection{Representation Error Bound}
 \label{sec:bound_theory}
 \begin{theorem}[Dynamic Representation Error Bound]
 \label{thm:bound}
-Let $\mathcal{L}_{\text{supra}} \in \mathbb{R}^{NT \times NT}$ be the dynamic supra-Laplacian, let $\mathcal{L}'_{\text{supra}} \in \mathbb{R}^{K_{\text{tot}} \times K_{\text{tot}}}$ be the coarsened supra-Laplacian produced by JST-Coarsen with ratio $\alpha \in (0, 1)$, and let $\Pi_P = P_{\text{norm}} P_{\text{norm}}^\top$ be the orthogonal projector onto the partition subspace. Then
+Let $\mathcal{L} \in \mathbb{R}^{NT \times NT}$ be the dynamic Laplacian, let $\mathcal{L}' \in \mathbb{R}^{K_{\text{tot}} \times K_{\text{tot}}}$ be the coarsened dynamic Laplacian produced by JST-Coarsen with ratio $\alpha \in (0, 1)$, and let $\mathcal{L}_{\text{lifted}} = \Pi_P \mathcal{L} \Pi_P \in \mathbb{R}^{NT \times NT}$ be the lifted dynamic Laplacian projected back to the original vertex space via partition projector $\Pi_P = P_{\text{norm}} P_{\text{norm}}^\top$. Then
 \begin{equation}
 \label{eq:bound}
 \begin{split}
-\left\| \mathcal{L}_{\text{supra}} - \Pi_P \mathcal{L}_{\text{supra}} \Pi_P \right\|_F \le {}& c_1 (1 - \alpha) g_{\min}^{-1} \\
+\left\| \mathcal{L} - \mathcal{L}_{\text{lifted}} \right\|_F \le {}& c_1 (1 - \alpha) g_{\min}^{-1} \\
 & + c_2 \beta_X \mathcal{D}_{\text{Dir}}(X) + \mathcal{O}\left((1 - \alpha)^2\right)
 \end{split}
 \end{equation}
@@ -644,12 +721,12 @@ Across the five benchmark datasets, JST-Coarsen exhibits robust generalization a
 \end{enumerate}
 
 \subsection{Preservation of Spectral and Feature Structure}
-Figure~\ref{fig:invariants} shows how two quantities change across $\alpha \in [0.3, 0.9]$ on DBLP5. In Figure~\ref{fig:invariants}(a), the relative spectral reconstruction error $\|\mathcal{L}_{\text{supra}} - \Pi_P \mathcal{L}_{\text{supra}} \Pi_P\|_F / \|\mathcal{L}_{\text{supra}}\|_F$ at $\alpha = 0.3$ is 41.2\% for the first-order SACoD criterion and 18.4\% for JST-Coarsen. In Figure~\ref{fig:invariants}(b), the retained feature Dirichlet energy $\mathcal{D}_{\text{Dir}}(\mathcal{G}') / \mathcal{D}_{\text{Dir}}(\mathcal{G})$ on DBLP5 at $\alpha = 0.3$ is 34.5\% under the feature-blind criterion and 84.2\% for JST-Coarsen. These measurements confirm that Modules 2 and 3 protect spectral geometry and minority feature variance under heavy reduction.
+Figure~\ref{fig:invariants} shows how two quantities change across $\alpha \in [0.3, 0.9]$ on DBLP5. In Figure~\ref{fig:invariants}(a), the relative spectral reconstruction error $\|\mathcal{L} - \mathcal{L}_{\text{lifted}}\|_F / \|\mathcal{L}\|_F$ at $\alpha = 0.3$ is 41.2\% for the first-order SACoD criterion and 18.4\% for JST-Coarsen. In Figure~\ref{fig:invariants}(b), the retained feature Dirichlet energy $\mathcal{D}_{\text{Dir}}(\mathcal{G}') / \mathcal{D}_{\text{Dir}}(\mathcal{G})$ on DBLP5 at $\alpha = 0.3$ is 34.5\% under the feature-blind criterion and 84.2\% for JST-Coarsen. These measurements confirm that Modules 2 and 3 protect spectral geometry and minority feature variance under heavy reduction.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{fig_spectral_dirichlet_invariants.png}
-\caption{Theoretical invariant preservation dynamics across coarsening ratios $\alpha \in [0.3, 0.9]$ on DBLP5: (a) Relative spectral reconstruction error $\|\mathcal{L}_{\text{supra}} - \Pi_P \mathcal{L}_{\text{supra}} \Pi_P\|_F / \|\mathcal{L}_{\text{supra}}\|_F$; (b) Normalized semantic feature Dirichlet energy retention $\mathcal{D}_{\text{Dir}}(\mathcal{G}') / \mathcal{D}_{\text{Dir}}(\mathcal{G})$ (\%).}
+\caption{Theoretical invariant preservation dynamics across coarsening ratios $\alpha \in [0.3, 0.9]$ on DBLP5: (a) Relative spectral reconstruction error $\|\mathcal{L} - \mathcal{L}_{\text{lifted}}\|_F / \|\mathcal{L}\|_F$; (b) Normalized semantic feature Dirichlet energy retention $\mathcal{D}_{\text{Dir}}(\mathcal{G}') / \mathcal{D}_{\text{Dir}}(\mathcal{G})$ (\%).}
 \label{fig:invariants}
 \end{figure}
 
@@ -683,7 +760,7 @@ Baseline SACoD-supra (KDD '26)        & 76.87 (\textit{--6.25 pp}) & 68.51 \\
 In this section, we analyze the computational efficiency and scalability profile of JST-Coarsen.
 
 \subsection{Coarsening Algorithm Execution Runtime}
-Figure~\ref{fig:runtime}(a) evaluates the wall-clock execution time of the coarsening algorithms across all benchmark datasets. Thanks to the localized 1-hop boundary summation (Lemma~\ref{lem:resolvent}) and priority-queue matching (Module 5), JST-Coarsen scales efficiently, running \textbf{2.1$\times$ to 3.1$\times$} faster than full supra-Laplacian eigensolvers in SACoD-supra (e.g., 32.5~s vs. 98.2~s on Reddit4, an acceleration of $3.02\times$).
+Figure~\ref{fig:runtime}(a) evaluates the wall-clock execution time of the coarsening algorithms across all benchmark datasets. Thanks to the localized 1-hop boundary summation (Lemma~\ref{lem:resolvent}) and priority-queue matching (Module 5), JST-Coarsen scales efficiently, running \textbf{2.1$\times$ to 3.1$\times$} faster than full dynamic Laplacian eigensolvers in SACoD-supra (e.g., 32.5~s vs. 98.2~s on Reddit4, an acceleration of $3.02\times$).
 
 \subsection{End-to-End Training Acceleration}
 Figure~\ref{fig:runtime}(b) reports the end-to-end wall-clock speedup factor (incorporating coarsening precomputation amortized over training epochs). Across all datasets, JST-Coarsen achieves \textbf{1.5$\times$ to 4.8$\times$} net training acceleration compared with training on the uncompressed graph. Together with the memory savings in Table~\ref{tab:efficiency} and module ablations in Table~\ref{tab:ablation}, these findings confirm both practical efficiency and mathematical necessity.
@@ -725,28 +802,28 @@ We presented \textbf{JST-Coarsen}, a joint spatio-temporal coarsening framework 
 
 \section{Proof of Representation Error Bound (Theorem 4.2)}
 \label{app:proof}
-We provide the mathematical derivation of Theorem~\ref{thm:bound}. Let $\mathcal{L}_{\text{supra}} \in \mathbb{R}^{NT \times NT}$ denote the dynamic supra-Laplacian operator, and let $\mathcal{L}'_{\text{supra}} \in \mathbb{R}^{K_{\text{tot}} \times K_{\text{tot}}}$ denote the coarsened operator induced by surjective block-diagonal partition $P$. Let $P_{\text{norm}} = P (P^\top P)^{-1/2}$ be the normalized lifting operator satisfying $P_{\text{norm}}^\top P_{\text{norm}} = I_{K_{\text{tot}}}$, and let $\Pi_P = P_{\text{norm}} P_{\text{norm}}^\top$ be the orthogonal projection operator onto the partition subspace.
+We provide the mathematical derivation of Theorem~\ref{thm:bound}. Let $\mathcal{L} \in \mathbb{R}^{NT \times NT}$ denote the dynamic Laplacian operator, and let $\mathcal{L}' \in \mathbb{R}^{K_{\text{tot}} \times K_{\text{tot}}}$ denote the coarsened operator induced by surjective block-diagonal partition $P$. Let $P_{\text{norm}} = P (P^\top P)^{-1/2}$ be the normalized lifting operator satisfying $P_{\text{norm}}^\top P_{\text{norm}} = I_{K_{\text{tot}}}$, and let $\Pi_P = P_{\text{norm}} P_{\text{norm}}^\top$ be the orthogonal projection operator onto the partition subspace.
 
 \paragraph{Step 1: Orthogonal Projection Decomposition}
-The operator approximation error between the original supra-Laplacian $\mathcal{L}_{\text{supra}}$ and the lifted coarsened operator $\widetilde{\mathcal{L}}_{\text{supra}} = \Pi_P \mathcal{L}_{\text{supra}} \Pi_P$ decomposes orthogonally as:
+The operator approximation error between the original dynamic Laplacian $\mathcal{L}$ and the lifted coarsened operator $\mathcal{L}_{\text{lifted}} = \Pi_P \mathcal{L} \Pi_P$ decomposes orthogonally as:
 \begin{equation}
 \label{eq:proof_decomp}
 \begin{split}
-\mathcal{L}_{\text{supra}} - \Pi_P \mathcal{L}_{\text{supra}} \Pi_P &= (I - \Pi_P) \mathcal{L}_{\text{supra}} \\
-&\quad + \Pi_P \mathcal{L}_{\text{supra}} (I - \Pi_P)
+\mathcal{L} - \mathcal{L}_{\text{lifted}} &= \mathcal{L} - \Pi_P \mathcal{L} \Pi_P = (I - \Pi_P) \mathcal{L} \\
+&\quad + \Pi_P \mathcal{L} (I - \Pi_P)
 \end{split}
 \end{equation}
 Applying the triangle inequality and sub-multiplicativity of the Frobenius norm:
 \begin{equation}
 \label{eq:proof_triangle}
-\left\| \mathcal{L}_{\text{supra}} - \Pi_P \mathcal{L}_{\text{supra}} \Pi_P \right\|_F \le 2 \left\| (I - \Pi_P) \mathcal{L}_{\text{supra}} \right\|_F
+\left\| \mathcal{L} - \mathcal{L}_{\text{lifted}} \right\|_F \le 2 \left\| (I - \Pi_P) \mathcal{L} \right\|_F
 \end{equation}
 
 \paragraph{Step 2: Resolvent Curvature Operator Norm Bounding}
 Under the second-order perturbation expansion (Lemma~\ref{lem:resolvent}), each contracted edge $(u, v) \in \mathcal{M}$ perturbs the invariant subspace by $\Delta \mathcal{L}$. The resolvent operator norm satisfies:
 \begin{equation}
 \label{eq:proof_resolvent}
-\left\| \left(\mathcal{L}_{\text{supra}} - \lambda_2 I\right)^\dagger \right\|_2 = \frac{1}{\min_{m \neq 2} |\lambda_m - \lambda_2|} \le \frac{1}{g_{\min}}
+\left\| \left(\mathcal{L} - \lambda_2 I\right)^\dagger \right\|_2 = \frac{1}{\min_{m \neq 2} |\lambda_m - \lambda_2|} \le \frac{1}{g_{\min}}
 \end{equation}
 where $g_{\min} = \min(\lambda_2, \lambda_3 - \lambda_2) > 0$.
 Summing across all $R = (1 - \alpha) NT$ independent edge contractions in matching $\mathcal{M}$ (Module 5), the independent edge property ($\operatorname{deg}_{\mathcal{M}_t}(u) \le 1$) ensures that cross-contraction interference terms remain second-order:
@@ -756,7 +833,7 @@ Summing across all $R = (1 - \alpha) NT$ independent edge contractions in matchi
 \end{equation}
 
 \paragraph{Step 3: Feature Dirichlet Projection Bound}
-Let $X \in \mathbb{R}^{NT \times d}$ denote the dynamic node feature matrix. For the mean-lifted node features $\widetilde{X} = \Pi_P X$, the reconstruction error satisfies:
+Let $X \in \mathbb{R}^{NT \times d}$ denote the dynamic node feature matrix. For the mean-lifted node features $X_{\text{lifted}} = \Pi_P X$, the reconstruction error satisfies:
 \begin{equation}
 \label{eq:proof_dirichlet}
 \begin{split}
@@ -777,10 +854,10 @@ The asymptotic time complexity of JST-Coarsen decomposes as follows:
     \item \textbf{Persistence Affinity Construction (Module 1):} $\mathcal{O}\left(\sum_{t=1}^T |\mathcal{E}_t|\right) = \mathcal{O}(|\mathcal{E}_{\text{total}}|)$.
     \item \textbf{Second-Order Resolvent and Dirichlet Scoring (Modules 2 \& 3):} Lemma~\ref{lem:resolvent} evaluates candidate pairs over 1-hop boundary vertices, scaling as $\mathcal{O}\left(\sum_{(u, v) \in \mathcal{E}} (\operatorname{deg}(u) + \operatorname{deg}(v))\right) = \mathcal{O}(|\mathcal{E}| \cdot \operatorname{deg}_{\text{avg}})$.
     \item \textbf{Gromov--Wasserstein Coupling (Module 4):} Solved via fast random-projection Wasserstein optimal transport in $\mathcal{O}(T \cdot N \log N)$ (or entropy-regularized Sinkhorn in $\mathcal{O}(T \cdot N^2 \log N)$).
-    \item \textbf{Supra-Laplacian Fiedler Vector Computation:} Computed via truncated Lanczos iteration with ARPACK ($k=6, \sigma=0.05$) in $\mathcal{O}(n_{\text{it}} \cdot |\mathcal{E}_{\text{supra}}|)$.
+    \item \textbf{Dynamic Laplacian Fiedler Vector Computation:} Computed via truncated Lanczos iteration with ARPACK ($k=6, \sigma=0.05$) in $\mathcal{O}(n_{\text{it}} \cdot |\mathcal{E}_{\text{dyn}}|)$.
     \item \textbf{Capacitated Matching (Module 5):} Priority-queue greedy heavy-edge matching scales as $\mathcal{O}(|\mathcal{E}| \log |\mathcal{E}|)$.
 \end{enumerate}
-Total coarsening precomputation scales as $\mathcal{O}(|\mathcal{E}| \log |\mathcal{E}| + n_{\text{it}} |\mathcal{E}_{\text{supra}}| + T K_t d)$, executing in under 35~s across all benchmarks (Figure~\ref{fig:runtime}(a)) and amortized over training epochs.
+Total coarsening precomputation scales as $\mathcal{O}(|\mathcal{E}| \log |\mathcal{E}| + n_{\text{it}} |\mathcal{E}_{\text{dyn}}| + T K_t d)$, executing in under 35~s across all benchmarks (Figure~\ref{fig:runtime}(a)) and amortized over training epochs.
 
 \section{Reproducibility Specifications and Hyperparameters}
 \label{app:reproducibility}
